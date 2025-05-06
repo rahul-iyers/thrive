@@ -8,12 +8,14 @@ import 'models/food.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
+
   Hive.registerAdapter(HabitAdapter());
   Hive.registerAdapter(ExerciseAdapter());
   Hive.registerAdapter(FoodAdapter());
-  // await Hive.deleteBoxFromDisk('habits'); // clear old data (DELETES EVERYTHING)
-  // await Hive.deleteBoxFromDisk('exercise_templates');
-  // await Hive.deleteBoxFromDisk('habits');
+
+  await Hive.deleteBoxFromDisk('habits'); // clear old data (DELETES EVERYTHING)
+  await Hive.deleteBoxFromDisk('exercise_templates');
+
   await Hive.openBox<Habit>('habits');
   await Hive.openBox<Exercise>('exercise_templates');
   await Hive.openBox<Food>('food_templates');
