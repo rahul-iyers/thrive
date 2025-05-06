@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:thrive/models/food.dart';
+import '../models/food.dart';
 import '../models/habit.dart';
+import '../screens/food_templates_screen.dart';
 
 class NutritionScreen extends StatefulWidget {
   final Habit habit;
@@ -13,11 +14,19 @@ class NutritionScreen extends StatefulWidget {
 
 class _NutritionScreenState extends State<NutritionScreen> {
   late Habit habit;
+  late TextEditingController _dietNotesController;
 
   @override
   void initState() {
     super.initState();
     habit = widget.habit;
+    _dietNotesController = TextEditingController(text: habit.dietNotes);
+  }
+
+  @override
+  void dispose() {
+    _dietNotesController.dispose();
+    super.dispose();
   }
 
   void addFood(Food food) {
@@ -46,96 +55,84 @@ class _NutritionScreenState extends State<NutritionScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Nutrition'),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: ListView(
-          children: [
-            // 🥗 Totals Section
-            Text(
-              'Totals',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _buildTotalCard('Calories', '${totalCalories.toStringAsFixed(0)} cal', Colors.orange.shade100),
-                _buildTotalCard('Protein', '${totalProtein.toStringAsFixed(1)}g', Colors.blue.shade100),
-                _buildTotalCard('Carbs', '${totalCarbs.toStringAsFixed(1)}g', Colors.green.shade100),
-                _buildTotalCard('Fats', '${totalFats.toStringAsFixed(1)}g', Colors.purple.shade100),
-                _buildTotalCard('Sugar', '${totalSugar.toStringAsFixed(1)}g', Colors.pink.shade100),
-              ],
-            ),
-
-            SizedBox(height: 20),
-
-            // 🍔 Food List
-            Text(
-              'Foods',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 8),
-            habit.foods.isEmpty
-                ? Text('No foods added yet.', style: TextStyle(color: Colors.grey))
-                : ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: habit.foods.length,
-              itemBuilder: (context, index) {
-                final food = habit.foods[index];
-                return TweenAnimationBuilder<double>(
-                  duration: Duration(milliseconds: 500),
-                  tween: Tween(begin: 0.8, end: 1),
-                  curve: Curves.elasticOut,
-                  builder: (context, value, child) {
-                    return Transform.scale(
-                      scale: value,
-                      child: child,
-                    );
-                  },
-                  child: Card(
-                    margin: EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      title: Text(food.name),
-                      subtitle: Text(
-                        '${food.calories.toStringAsFixed(0)} cal | '
-                            '${food.protein.toStringAsFixed(1)}g protein | '
-                            '${food.carbs.toStringAsFixed(1)}g carbs | '
-                            '${food.fats.toStringAsFixed(1)}g fat | '
-                            '${food.addedSugar.toStringAsFixed(1)}g sugar',
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.close, color: Colors.red),
-                        onPressed: () {
-                          deleteFood(index);
-                        },
-                      ),
-                    ),
-                  ),
-                );
-              },
-            ),
-
-            SizedBox(height: 20),
-
-            // ➕ Add Food Button
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
+    return WillPopScope(
+      onWillPop: () async {
+        habit.dietNotes = _dietNotesController.text;
+        Navigator.pop(context, habit);
+        return false; // Prevent default pop, we handled it manually
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('Nutrition'),
+          leading: IconButton(
+            icon: Icon(Icons.arrow_back),
+            onPressed: () {
+              habit.dietNotes = _dietNotesController.text;
+              Navigator.pop(context, habit);
+            },
+          ),
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(16),
+          child: ListView(
+            children: [
+              _buildTotalsCard(),
+              SizedBox(height: 16),
+              _buildDietNotesCard(),
+              SizedBox(height: 16),
+              _buildFoodsList(),
+              SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _showFoodOptions,
+                child: Text('Add Food'),
               ),
-              onPressed: () async {
-                final newFood = await _showAddFoodDialog();
-                if (newFood != null) {
-                  addFood(newFood);
-                }
-              },
-              child: Text('Add Food'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTotalsCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Daily Totals', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            _buildNutrientRow('Calories', totalCalories.toStringAsFixed(1)),
+            _buildNutrientRow('Protein (g)', totalProtein.toStringAsFixed(1)),
+            _buildNutrientRow('Carbs (g)', totalCarbs.toStringAsFixed(1)),
+            _buildNutrientRow('Fats (g)', totalFats.toStringAsFixed(1)),
+            _buildNutrientRow('Added Sugar (g)', totalSugar.toStringAsFixed(1)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDietNotesCard() {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Diet Notes', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            TextField(
+              controller: _dietNotesController,
+              maxLines: 3,
+              decoration: InputDecoration(
+                hintText: 'Write notes about your diet here',
+                border: OutlineInputBorder(),
+              ),
             ),
           ],
         ),
@@ -143,28 +140,79 @@ class _NutritionScreenState extends State<NutritionScreen> {
     );
   }
 
-  Widget _buildTotalCard(String label, String value, Color color) {
-    return Container(
-      width: 100,
-      padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
+  Widget _buildFoodsList() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Foods', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        habit.foods.isEmpty
+            ? Text('No foods added yet.', style: TextStyle(color: Colors.grey))
+            : ListView.builder(
+          shrinkWrap: true,
+          physics: NeverScrollableScrollPhysics(),
+          itemCount: habit.foods.length,
+          itemBuilder: (context, index) {
+            final food = habit.foods[index];
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 6),
+              child: ListTile(
+                title: Text(food.name),
+                subtitle: Text('${food.calories} cal | ${food.protein}g P | ${food.carbs}g C | ${food.fats}g F | ${food.addedSugar}g Sugar'),
+                trailing: IconButton(
+                  icon: Icon(Icons.close, color: Colors.red),
+                  onPressed: () => deleteFood(index),
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNutrientRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            label,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          Text(label),
+          Text(value),
+        ],
+      ),
+    );
+  }
+
+  void _showFoodOptions() async {
+    final pickedOption = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Add Food'),
+        content: Text('Choose how you want to add food:'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, 'manual'),
+            child: Text('Manual Entry'),
           ),
-          SizedBox(height: 4),
-          Text(
-            value,
-            style: TextStyle(fontSize: 13),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, 'template'),
+            child: Text('Pick from Template'),
           ),
         ],
       ),
     );
+
+    if (pickedOption == 'manual') {
+      final newFood = await _showAddFoodDialog();
+      if (newFood != null) addFood(newFood);
+    } else if (pickedOption == 'template') {
+      final selectedFood = await Navigator.push<Food>(
+        context,
+        MaterialPageRoute(builder: (context) => FoodTemplatesScreen()),
+      );
+      if (selectedFood != null) addFood(selectedFood);
+    }
   }
 
   Future<Food?> _showAddFoodDialog() async {
@@ -179,16 +227,39 @@ class _NutritionScreenState extends State<NutritionScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add Food'),
+          title: Text('Add Food Manually'),
           content: SingleChildScrollView(
             child: Column(
               children: [
-                _buildTextField('Name', (val) => name = val),
-                _buildTextField('Calories', (val) => calories = double.tryParse(val) ?? 0, number: true),
-                _buildTextField('Protein (g)', (val) => protein = double.tryParse(val) ?? 0, number: true),
-                _buildTextField('Carbs (g)', (val) => carbs = double.tryParse(val) ?? 0, number: true),
-                _buildTextField('Fats (g)', (val) => fats = double.tryParse(val) ?? 0, number: true),
-                _buildTextField('Added Sugar (g)', (val) => addedSugar = double.tryParse(val) ?? 0, number: true),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Name'),
+                  onChanged: (val) => name = val,
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Calories'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => calories = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Protein (g)'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => protein = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Carbs (g)'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => carbs = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Fats (g)'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => fats = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  decoration: InputDecoration(labelText: 'Added Sugar (g)'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => addedSugar = double.tryParse(val) ?? 0,
+                ),
               ],
             ),
           ),
@@ -218,17 +289,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
           ],
         );
       },
-    );
-  }
-
-  Widget _buildTextField(String label, Function(String) onChanged, {bool number = false}) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: TextField(
-        decoration: InputDecoration(labelText: label),
-        keyboardType: number ? TextInputType.number : TextInputType.text,
-        onChanged: onChanged,
-      ),
     );
   }
 }

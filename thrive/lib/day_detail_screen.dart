@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:hive_flutter/hive_flutter.dart';
-import 'package:intl/intl.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
-import '../screens/add_exercise_screen.dart';
-import '../screens/view_exercises_screen.dart';
-import '../screens/nutrition_screen.dart';
+import 'screens/add_exercise_screen.dart';
+import 'screens/view_exercises_screen.dart';
+import 'screens/nutrition_screen.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:intl/intl.dart';
 
 class DayDetailScreen extends StatefulWidget {
   final DateTime date;
@@ -56,6 +56,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       foods: habit?.foods ?? [],
     );
     habitBox.put(key, newHabit);
+    habit = newHabit;
   }
 
   int get totalExerciseMinutes {
@@ -72,7 +73,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            // Sleep Hours
             Text('Sleep Hours: ${sleepHours.toStringAsFixed(1)}'),
             Slider(
               min: 0,
@@ -87,7 +87,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             ),
             SizedBox(height: 16),
 
-            // Mood Rating
             Text('Mood Rating: $moodRating'),
             Slider(
               min: 1,
@@ -102,11 +101,9 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             ),
             SizedBox(height: 16),
 
-            // Total Exercise Minutes
             Text('Total Exercise Minutes: $totalExerciseMinutes'),
             SizedBox(height: 8),
 
-            // Add Exercise Button
             ElevatedButton(
               onPressed: () async {
                 final newExercise = await Navigator.push(
@@ -125,7 +122,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               child: Text('Add Exercise'),
             ),
 
-            // View Exercises Button
             ElevatedButton(
               onPressed: () {
                 Navigator.push(
@@ -147,15 +143,14 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
 
             SizedBox(height: 16),
 
-            // 🥗 Nutrition Button
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade400,
                 foregroundColor: Colors.white,
                 textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              onPressed: () {
-                Navigator.push(
+              onPressed: () async {
+                final updatedHabit = await Navigator.push<Habit>(
                   context,
                   MaterialPageRoute(
                     builder: (context) => NutritionScreen(habit: habit ?? Habit(
@@ -163,27 +158,22 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       moodRating: moodRating,
                       dietNotes: dietNotes,
                       exercises: exercises,
+                      foods: [],
                     )),
                   ),
                 );
+
+                if (updatedHabit != null) {
+                  setState(() {
+                    habit = updatedHabit;
+                    dietNotes = updatedHabit.dietNotes;
+                  });
+                  saveHabit();
+                }
               },
               child: Text('Nutrition'),
             ),
 
-            SizedBox(height: 16),
-
-            // Diet Notes
-            TextField(
-              controller: TextEditingController(text: dietNotes),
-              maxLines: 4,
-              decoration: InputDecoration(
-                border: OutlineInputBorder(),
-                labelText: 'Diet Notes',
-              ),
-              onChanged: (val) {
-                dietNotes = val;
-              },
-            ),
             SizedBox(height: 20),
 
             ElevatedButton(
