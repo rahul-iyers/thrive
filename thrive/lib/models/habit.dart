@@ -21,11 +21,15 @@ class Habit extends HiveObject {
   @HiveField(4)
   List<Food> foods;
 
+  @HiveField(5)
+  String workoutNotes;
+
   Habit({
     required this.sleepHours,
     required this.moodRating,
     required this.dietNotes,
     required this.exercises,
     this.foods = const [],
+    required this.workoutNotes
   });
 }
