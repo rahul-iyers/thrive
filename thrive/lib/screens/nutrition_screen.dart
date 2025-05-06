@@ -205,7 +205,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
         title: Text('Add Food'),
         content: Text('Choose how you want to add food:'),
         actions: [
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, 'manual'),
             child: Text('Manual Entry'),
           ),
