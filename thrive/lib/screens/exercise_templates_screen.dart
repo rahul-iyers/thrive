@@ -26,7 +26,7 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
             templatesBox.add(newExercise);
             setState(() {});
           },
-          showPickTemplateButton: false, // ✅ Hide Pick Template when creating template
+          showPickTemplateButton: false,
         ),
       ),
     );
@@ -42,7 +42,7 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
             setState(() {});
           },
           exercise: oldExercise,
-          showPickTemplateButton: false, // ✅ Hide Pick Template when editing template
+          showPickTemplateButton: false,
         ),
       ),
     );
@@ -77,16 +77,76 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
       )
           : ListView.builder(
         itemCount: templates.length,
+        padding: EdgeInsets.symmetric(vertical: 12, horizontal: 8),
         itemBuilder: (context, index) {
           final exercise = templates[index];
+
           return Dismissible(
             key: UniqueKey(),
             background: Container(color: Colors.red),
             onDismissed: (_) => deleteTemplate(index),
-            child: ListTile(
-              title: Text(exercise.name),
-              subtitle: Text('${exercise.type} | ${exercise.minutes} min'),
+            child: GestureDetector(
               onTap: () => editTemplate(index, exercise),
+              child: Container(
+                margin: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                padding: EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade50,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black12,
+                      blurRadius: 4,
+                      offset: Offset(2, 2),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Exercise Name
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          exercise.name,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 6),
+                    // Sets, Reps, Weight
+                    Text(
+                      'Sets: ${exercise.sets}  Reps: ${exercise.reps}  Weight: ${exercise.weight}',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    SizedBox(height: 4),
+                    // Type
+                    Text(
+                      'Type: ${exercise.type} | ${exercise.minutes} min',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                    // Notes (optional)
+                    if (exercise.notes.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          'Notes: ${exercise.notes}',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
             ),
           );
         },

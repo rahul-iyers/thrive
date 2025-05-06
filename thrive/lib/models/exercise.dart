@@ -5,25 +5,24 @@ part 'exercise.g.dart';
 @HiveType(typeId: 1)
 class Exercise extends HiveObject {
   @HiveField(0)
-  String name;
+  String name; // name of exercise
 
   @HiveField(1)
   int minutes; // minutes spent on exercise
 
   @HiveField(2)
-  int sets; // gym only (can be 0 for sports)
+  int sets; // gym
 
   @HiveField(3)
-  int reps; // gym only (can be 0 for sports)
+  int reps; // gym
 
   @HiveField(4)
-  String weight; // gym only (can be 0 for sports)
+  String weight; // gym
 
   @HiveField(5)
-  String notes; // optional notes (e.g., "Felt great" / "Hard tennis match")
-
+  String notes; // optional notes
   @HiveField(6)
-  String type; // Gym, Sport, Cardio, etc.
+  String type; // gym, sport, cardio, etc.
 
   Exercise({
     required this.name,

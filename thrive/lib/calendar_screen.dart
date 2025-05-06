@@ -14,6 +14,7 @@ class CalendarScreen extends StatefulWidget {
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedMonth = DateTime.now();
   late Box<Habit> habitBox;
+  DateTime? _tappedDay;
 
   @override
   void initState() {
@@ -35,63 +36,112 @@ class _CalendarScreenState extends State<CalendarScreen> {
           _buildMonthHeader(),
           _buildWeekDaysRow(),
 
-          // 🛠 SizedBox instead of Expanded
           SizedBox(
-            height: 400, // 🔥 Adjust if needed for your phone
-            child: GridView.builder(
-              padding: const EdgeInsets.all(8),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 7,
-                crossAxisSpacing: 4,
-                mainAxisSpacing: 4,
-              ),
-              itemCount: days.length,
-              itemBuilder: (context, index) {
-                final day = days[index];
-                final dotColor = _getDotColor(day);
+            height: 500,
+            child: AnimatedSwitcher(
+              duration: Duration(milliseconds: 300),
+              child: GridView.builder(
+                key: ValueKey<String>(_focusedMonth.toString()),
+                padding: const EdgeInsets.all(8),
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 7,
+                  crossAxisSpacing: 6,
+                  mainAxisSpacing: 6,
+                ),
+                itemCount: days.length,
+                itemBuilder: (context, index) {
+                  final day = days[index];
+                  final dotColor = _getDotColor(day);
+                  final isToday = _isSameDay(day, DateTime.now());
 
-                return GestureDetector(
-                  onTap: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => DayDetailScreen(date: day),
-                      ),
-                    );
-                    setState(() {});
-                  },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: day.month == _focusedMonth.month
-                          ? Colors.blue.shade100
-                          : Colors.grey.shade200,
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            color: day.month == _focusedMonth.month
-                                ? Colors.black
-                                : Colors.grey,
-                          ),
+                  return GestureDetector(
+                    onTap: () async {
+                      setState(() {
+                        _tappedDay = day;
+                      });
+
+                      await Future.delayed(Duration(milliseconds: 150));
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DayDetailScreen(date: day),
                         ),
-                        if (dotColor != 'none')
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: CircleAvatar(
-                              radius: 3,
-                              backgroundColor:
-                              dotColor == 'blue' ? Colors.blue : Colors.red,
-                            ),
-                          ),
-                      ],
+                      );
+
+                      setState(() {
+                        _tappedDay = null;
+                      });
+                    },
+                    child: AnimatedScale(
+                      scale: _tappedDay == day ? 0.95 : 1.0,
+                      duration: Duration(milliseconds: 150),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: day.month == _focusedMonth.month
+                              ? Colors.white
+                              : Colors.grey.shade200,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            if (day.month == _focusedMonth.month)
+                              BoxShadow(
+                                color: Colors.black12,
+                                blurRadius: 4,
+                                offset: Offset(2, 2),
+                              ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            if (isToday)
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color: Colors.lightBlueAccent,
+                                    width: 2,
+                                  ),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  '${day.day}',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black,
+                                  ),
+                                ),
+                              )
+                            else
+                              Text(
+                                '${day.day}',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: day.month == _focusedMonth.month
+                                      ? Colors.black
+                                      : Colors.grey,
+                                ),
+                              ),
+                            if (dotColor != 'none')
+                              Padding(
+                                padding: const EdgeInsets.only(top: 6),
+                                child: CircleAvatar(
+                                  radius: 4,
+                                  backgroundColor: dotColor == 'blue'
+                                      ? Colors.blue
+                                      : Colors.red,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
                     ),
-                  ),
-                );
-              },
+                  );
+                },
+              ),
             ),
           ),
 
@@ -104,7 +154,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 style: ElevatedButton.styleFrom(
                   textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   foregroundColor: Colors.black,
-                  backgroundColor: Colors.blueGrey,
+                  backgroundColor: Colors.lightBlueAccent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -125,12 +178,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
 
   Widget _buildMonthHeader() {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left),
+            icon: Icon(Icons.chevron_left, size: 32),
             onPressed: () {
               setState(() {
                 _focusedMonth = DateTime(
@@ -142,10 +195,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
           Text(
             DateFormat.yMMMM().format(_focusedMonth),
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
+            ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right),
+            icon: Icon(Icons.chevron_right, size: 32),
             onPressed: () {
               setState(() {
                 _focusedMonth = DateTime(
@@ -163,23 +220,27 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Widget _buildWeekDaysRow() {
     const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: weekDays
-          .map(
-            (day) => Expanded(
-          child: Center(
-            child: Text(
-              day,
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[600],
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
+        children: weekDays
+            .map(
+              (day) => Expanded(
+            child: Center(
+              child: Text(
+                day,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  color: Colors.grey[600],
+                ),
               ),
             ),
           ),
-        ),
-      )
-          .toList(),
+        )
+            .toList(),
+      ),
     );
   }
 
@@ -204,7 +265,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return days;
   }
 
-  // ✅ Dot color logic
   String _getDotColor(DateTime day) {
     final key = DateFormat('yyyy-MM-dd').format(day);
     final habit = habitBox.get(key);
@@ -214,14 +274,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
           habit.sleepHours > 0 ||
           habit.moodRating > 0 ||
           habit.dietNotes.isNotEmpty) {
-        return 'blue'; // Day has data
+        return 'blue';
       }
     }
 
     if (day.isBefore(DateTime.now())) {
-      return 'red'; // Past day, missing data
+      return 'red';
     }
 
-    return 'none'; // No dot
+    return 'none';
+  }
+
+  bool _isSameDay(DateTime a, DateTime b) {
+    return a.year == b.year && a.month == b.month && a.day == b.day;
   }
 }
