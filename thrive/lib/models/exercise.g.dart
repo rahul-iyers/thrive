@@ -20,7 +20,7 @@ class ExerciseAdapter extends TypeAdapter<Exercise> {
       name: fields[0] as String,
       minutes: fields[1] as int,
       sets: fields[2] as int,
-      reps: fields[3] as int,
+      reps: fields[3] as String,
       weight: fields[4] as String,
       notes: fields[5] as String,
       type: fields[6] as String,

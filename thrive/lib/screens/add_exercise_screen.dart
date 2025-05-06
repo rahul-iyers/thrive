@@ -45,10 +45,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
         text: widget.exercise != null && widget.exercise!.sets > 0
             ? widget.exercise!.sets.toString()
             : '');
-    repsController = TextEditingController(
-        text: widget.exercise != null && widget.exercise!.reps > 0
-            ? widget.exercise!.reps.toString()
-            : '');
+    repsController = TextEditingController(text: widget.exercise?.reps ?? '');
     weightController = TextEditingController(text: widget.exercise?.weight ?? '');
     notesController = TextEditingController(text: widget.exercise?.notes ?? '');
 
@@ -111,7 +108,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                       children: [
                         if (template.type.isNotEmpty)
                           _buildTag('Type: ${template.type}'),
-                        if (template.sets > 0 && template.reps > 0)
+                        if (template.sets > 0 && template.reps.isNotEmpty)
                           _buildTag('Sets x Reps: ${template.sets} x ${template.reps}'),
                         if (template.weight.isNotEmpty)
                           _buildTag('Weight: ${template.weight}'),
@@ -140,7 +137,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
         nameController.text = selected.name;
         minutesController.text = selected.minutes.toString();
         setsController.text = selected.sets.toString();
-        repsController.text = selected.reps.toString();
+        repsController.text = selected.reps;
         weightController.text = selected.weight;
         notesController.text = selected.notes;
         type = selected.type;
@@ -235,7 +232,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
               TextFormField(
                 controller: repsController,
                 decoration: InputDecoration(labelText: 'Reps'),
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.text,
               ),
               SizedBox(height: 12),
 
@@ -263,7 +260,7 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
                       name: nameController.text.trim(),
                       minutes: int.tryParse(minutesController.text.trim()) ?? 0,
                       sets: int.tryParse(setsController.text.trim()) ?? 0,
-                      reps: int.tryParse(repsController.text.trim()) ?? 0,
+                      reps: repsController.text.trim(),
                       weight: weightController.text.trim(),
                       notes: notesController.text.trim(),
                       type: type,

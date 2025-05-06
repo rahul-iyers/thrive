@@ -10,6 +10,7 @@ class ExerciseTemplatesScreen extends StatefulWidget {
 
 class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
   late Box<Exercise> templatesBox;
+  int? tappedIndex;
 
   @override
   void initState() {
@@ -33,6 +34,12 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
   }
 
   void editTemplate(int index, Exercise oldExercise) async {
+    setState(() {
+      tappedIndex = index;
+    });
+
+    await Future.delayed(Duration(milliseconds: 150)); // Smooth bounce time
+
     await Navigator.push(
       context,
       MaterialPageRoute(
@@ -46,6 +53,10 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
         ),
       ),
     );
+
+    setState(() {
+      tappedIndex = null;
+    });
   }
 
   void deleteTemplate(int index) {
@@ -87,64 +98,68 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
             onDismissed: (_) => deleteTemplate(index),
             child: GestureDetector(
               onTap: () => editTemplate(index, exercise),
-              child: Container(
-                margin: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-                padding: EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(2, 2),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Exercise Name
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          exercise.name,
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 6),
-                    // Sets, Reps, Weight
-                    Text(
-                      'Sets: ${exercise.sets}  Reps: ${exercise.reps}  Weight: ${exercise.weight}',
-                      style: TextStyle(fontSize: 14),
-                    ),
-                    SizedBox(height: 4),
-                    // Type
-                    Text(
-                      'Type: ${exercise.type} | ${exercise.minutes} min',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
+              child: AnimatedScale(
+                scale: tappedIndex == index ? 0.95 : 1.0,
+                duration: Duration(milliseconds: 150),
+                child: Container(
+                  margin: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                  padding: EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 4,
+                        offset: Offset(2, 2),
                       ),
-                    ),
-                    // Notes (optional)
-                    if (exercise.notes.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 4),
-                        child: Text(
-                          'Notes: ${exercise.notes}',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Exercise Name
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            exercise.name,
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
+                        ],
+                      ),
+                      SizedBox(height: 6),
+                      // Sets, Reps, Weight
+                      Text(
+                        'Sets: ${exercise.sets}  Reps: ${exercise.reps}  Weight: ${exercise.weight}',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      SizedBox(height: 4),
+                      // Type
+                      Text(
+                        'Type: ${exercise.type} | ${exercise.minutes} min',
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey[600],
                         ),
                       ),
-                  ],
+                      // Notes (optional)
+                      if (exercise.notes.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            'Notes: ${exercise.notes}',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey[600],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ),

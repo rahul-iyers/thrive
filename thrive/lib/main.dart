@@ -10,6 +10,7 @@ void main() async {
   Hive.registerAdapter(HabitAdapter());
   Hive.registerAdapter(ExerciseAdapter());
   // await Hive.deleteBoxFromDisk('habits'); // clear old data (DELETES EVERYTHING)
+  // await Hive.deleteBoxFromDisk('exercise_templates');
   await Hive.openBox<Habit>('habits');
   await Hive.openBox<Exercise>('exercise_templates');
   runApp(Thrive());

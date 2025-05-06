@@ -14,7 +14,7 @@ class Exercise extends HiveObject {
   int sets; // gym
 
   @HiveField(3)
-  int reps; // gym
+  String reps; // gym
 
   @HiveField(4)
   String weight; // gym
@@ -28,7 +28,7 @@ class Exercise extends HiveObject {
     required this.name,
     this.minutes = 0,
     this.sets = 0,
-    this.reps = 0,
+    this.reps = '',
     this.weight = '',
     this.notes = '',
     this.type = 'Gym',
