@@ -1,6 +1,7 @@
 import 'package:hive/hive.dart';
 import 'exercise.dart';
 import 'food.dart';
+import 'workout.dart';
 
 part 'habit.g.dart';
 
@@ -24,12 +25,16 @@ class Habit extends HiveObject {
   @HiveField(5)
   String workoutNotes;
 
+  @HiveField(6)
+  List<Workout> workouts;
+
   Habit({
     required this.sleepHours,
     required this.moodRating,
     required this.dietNotes,
     required this.exercises,
     this.foods = const [],
-    required this.workoutNotes
+    required this.workoutNotes,
+    this.workouts = const[]
   });
 }

@@ -21,6 +21,7 @@ class Exercise extends HiveObject {
 
   @HiveField(5)
   String notes; // optional notes
+
   @HiveField(6)
   String type; // gym, sport, cardio, etc.
 

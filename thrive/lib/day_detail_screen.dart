@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
+import 'models/workout.dart';
 import 'screens/add_exercise_screen.dart';
 import 'screens/view_exercises_screen.dart';
 import 'screens/nutrition_screen.dart';
@@ -57,6 +58,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       dietNotes: dietNotes,
       exercises: exercises,
       foods: habit?.foods ?? [],
+      workouts: habit?.workouts ?? [],
       workoutNotes: workoutNotes
     );
     habitBox.put(key, newHabit);

@@ -23,13 +23,14 @@ class HabitAdapter extends TypeAdapter<Habit> {
       exercises: (fields[3] as List).cast<Exercise>(),
       foods: (fields[4] as List).cast<Food>(),
       workoutNotes: fields[5] as String,
+      workouts: (fields[6] as List).cast<Workout>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, Habit obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(7)
       ..writeByte(0)
       ..write(obj.sleepHours)
       ..writeByte(1)
@@ -41,7 +42,9 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..writeByte(4)
       ..write(obj.foods)
       ..writeByte(5)
-      ..write(obj.workoutNotes);
+      ..write(obj.workoutNotes)
+      ..writeByte(6)
+      ..write(obj.workouts);
   }
 
   @override

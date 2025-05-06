@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../models/food.dart';
+import 'package:thrive/models/workout.dart';
 import '../models/habit.dart';
+import '../models/exercise.dart';
 import '../screens/exercise_templates_screen.dart';
 
 class WorkoutsScreen extends StatefulWidget {
@@ -15,6 +16,8 @@ class WorkoutsScreen extends StatefulWidget {
 class _WorkoutsScreenState extends State<WorkoutsScreen> {
   late Habit habit;
   late TextEditingController _workoutNotesController;
+  String type = 'Gym';
+
 
   @override
   void initState() {
@@ -29,29 +32,25 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     super.dispose();
   }
 
-  void addFood(Food food) {
+  void addWorkout(Workout workout) {
     setState(() {
-      final updatedFoods = List<Food>.from(habit.foods);
-      updatedFoods.add(food);
-      habit.foods = updatedFoods;
+      final updatedWorkout = List<Workout>.from(habit.workouts);
+      updatedWorkout.add(workout);
+      habit.workouts = updatedWorkout;
     });
   }
 
-  void deleteFood(int index) {
+  void deleteWorkout(int index) {
     setState(() {
-      final updatedFoods = List<Food>.from(habit.foods);
-      if (index >= 0 && index < updatedFoods.length) {
-        updatedFoods.removeAt(index);
-        habit.foods = updatedFoods;
+      final updatedWorkout = List<Workout>.from(habit.workouts);
+      if (index >= 0 && index < updatedWorkout.length) {
+        updatedWorkout.removeAt(index);
+        habit.workouts = updatedWorkout;
       }
     });
   }
 
-  double get totalCalories => habit.foods.fold(0, (sum, food) => sum + food.calories);
-  double get totalProtein => habit.foods.fold(0, (sum, food) => sum + food.protein);
-  double get totalCarbs => habit.foods.fold(0, (sum, food) => sum + food.carbs);
-  double get totalFats => habit.foods.fold(0, (sum, food) => sum + food.fats);
-  double get totalSugar => habit.foods.fold(0, (sum, food) => sum + food.addedSugar);
+  double get totalMinutes => habit.workouts.fold(0, (sum, workout) => sum + workout.minutes);
 
   void _saveWorkoutNotes() {
     habit.workoutNotes = _workoutNotesController.text;
@@ -93,14 +92,14 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               SizedBox(height: 16),
               _buildWorkoutNotesCard(),
               SizedBox(height: 16),
-              _buildFoodsList(),
+              _buildWorkoutsList(),
               SizedBox(height: 20),
               ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: _showFoodOptions,
+                onPressed: _createWorkout,
                 child: Text('Add Workout'),
               ),
             ],
@@ -119,11 +118,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           children: [
             Text('Daily Totals', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 8),
-            _buildNutrientRow('Calories', totalCalories.toStringAsFixed(1)),
-            _buildNutrientRow('Protein (g)', totalProtein.toStringAsFixed(1)),
-            _buildNutrientRow('Carbs (g)', totalCarbs.toStringAsFixed(1)),
-            _buildNutrientRow('Fats (g)', totalFats.toStringAsFixed(1)),
-            _buildNutrientRow('Added Sugar (g)', totalSugar.toStringAsFixed(1)),
+            _buildWorkoutRow('Workout Minutes', totalMinutes.toStringAsFixed(1)),
           ],
         ),
       ),
@@ -153,31 +148,31 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
-  Widget _buildFoodsList() {
+  Widget _buildWorkoutsList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Workouts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
-        habit.foods.isEmpty
+        habit.workouts.isEmpty
             ? Text('No workouts added yet.', style: TextStyle(color: Colors.grey))
             : ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
-          itemCount: habit.foods.length,
+          itemCount: habit.workouts.length,
           itemBuilder: (context, index) {
-            final food = habit.foods[index];
+            final workout = habit.workouts[index];
             return Card(
               margin: EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
-                title: Text(food.name),
+                title: Text(workout.name),
                 subtitle: Text(
-                    '${food.calories} cal | ${food.protein}g P | ${food.carbs}g C | ${food.fats}g F | ${food.addedSugar}g Sugar'),
+                    '${workout.type} | ${workout.minutes} min '),
                 trailing: IconButton(
                   icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: () => deleteFood(index),
+                  onPressed: () => deleteWorkout(index),
                 ),
-                onTap: () => _editFood(context, index, food),
+                onTap: () => _editWorkout(context, index, workout),
               ),
             );
           },
@@ -186,7 +181,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
-  Widget _buildNutrientRow(String label, String value) {
+  Widget _buildWorkoutRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -199,19 +194,16 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
-  void _editFood(BuildContext context, int index, Food food) async {
-    String name = food.name;
-    double calories = food.calories;
-    double protein = food.protein;
-    double carbs = food.carbs;
-    double fats = food.fats;
-    double addedSugar = food.addedSugar;
+  void _editWorkout(BuildContext context, int index, Workout workout) async {
+    String name = workout.name;
+    String type = workout.type;
+    double minutes = workout.minutes;
 
-    final updatedFood = await showDialog<Food>(
+    final updatedWorkout = await showDialog<Workout>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Food'),
+          title: Text('Edit Workout'),
           content: SingleChildScrollView(
             child: Column(
               children: [
@@ -221,36 +213,16 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   onChanged: (val) => name = val,
                 ),
                 TextField(
-                  controller: TextEditingController(text: calories.toString()),
-                  decoration: InputDecoration(labelText: 'Calories'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => calories = double.tryParse(val) ?? 0,
+                  controller: TextEditingController(text: type),
+                  decoration: InputDecoration(labelText: 'Type'),
+                  onChanged: (val) => type = val,
                 ),
                 TextField(
-                  controller: TextEditingController(text: protein.toString()),
-                  decoration: InputDecoration(labelText: 'Protein'),
+                  controller: TextEditingController(text: minutes.toString()),
+                  decoration: InputDecoration(labelText: 'Minutes'),
                   keyboardType: TextInputType.number,
-                  onChanged: (val) => protein = double.tryParse(val) ?? 0,
+                  onChanged: (val) => minutes = double.tryParse(val) ?? 0,
                 ),
-                TextField(
-                  controller: TextEditingController(text: carbs.toString()),
-                  decoration: InputDecoration(labelText: 'Carbs'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => carbs = double.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  controller: TextEditingController(text: fats.toString()),
-                  decoration: InputDecoration(labelText: 'Fats'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => fats = double.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  controller: TextEditingController(text: addedSugar.toString()),
-                  decoration: InputDecoration(labelText: 'Added Sugar'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => addedSugar = double.tryParse(val) ?? 0,
-                ),
-
               ],
             ),
           ),
@@ -263,13 +235,10 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               onPressed: () {
                 Navigator.pop(
                   context,
-                  Food(
+                  Workout(
                     name: name,
-                    calories: calories,
-                    protein: protein,
-                    carbs: carbs,
-                    fats: fats,
-                    addedSugar: addedSugar,
+                    type: type,
+                    minutes: minutes,
                   ),
                 );
               },
@@ -280,119 +249,86 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       },
     );
 
-    if (updatedFood != null) {
+    if (updatedWorkout != null) {
       setState(() {
-        habit.foods[index] = updatedFood;
+        habit.workouts[index] = updatedWorkout;
       });
     }
   }
 
+  void _createWorkout() async {
+    Future<Workout?> showAddWorkoutDialog() async {
+      String name = '';
+      String type = '';
+      double minutes = 0;
 
-  void _showFoodOptions() async {
-    final pickedOption = await showDialog<String>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add Workout'),
-        content: Text('Choose how you want to add your workout:'),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, 'manual'),
-            child: Text('Manual Entry'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, 'template'),
-            child: Text('Pick from Template'),
-          ),
-        ],
-      ),
-    );
-
-    if (pickedOption == 'manual') {
-      final newFood = await _showAddFoodDialog();
-      if (newFood != null) addFood(newFood);
-    } else if (pickedOption == 'template') {
-      final selectedFood = await Navigator.push<Food>(
-        context,
-        MaterialPageRoute(builder: (context) => ExerciseTemplatesScreen()),
+      return await showDialog<Workout>(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: Text('Create a Workout'),
+            content: SingleChildScrollView(
+              child: Column(
+                children: [
+                  TextField(
+                    decoration: InputDecoration(labelText: 'Name'),
+                    onChanged: (val) => name = val,
+                  ),
+                  // DropdownButtonFormField<String>(
+                  //   value: type,
+                  //   decoration: InputDecoration(labelText: 'Type'),
+                  //   items: ['Gym', 'Cardio', 'Sport'].map((typeOption) {
+                  //     return DropdownMenuItem(
+                  //       value: typeOption,
+                  //       child: Text(typeOption),
+                  //     );
+                  //   }).toList(),
+                  //   onChanged: (value) {
+                  //     if (value != null) {
+                  //       setState(() {
+                  //         type = value;
+                  //       });
+                  //     }
+                  //   },
+                  // ),
+                  TextField(
+                    decoration: InputDecoration(labelText: 'Type'),
+                    onChanged: (val) => type = val,
+                  ),
+                  TextField(
+                    decoration: InputDecoration(labelText: 'Minutes'),
+                    keyboardType: TextInputType.number,
+                    onChanged: (val) => minutes = double.tryParse(val) ?? 0,
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (name.isNotEmpty) {
+                    Navigator.pop(
+                      context,
+                      Workout(
+                        name: name,
+                        type: type,
+                        minutes: minutes,
+                      ),
+                    );
+                  }
+                },
+                child: Text('Save'),
+              ),
+            ],
+          );
+        },
       );
-      if (selectedFood != null) addFood(selectedFood);
     }
-  }
-
-  Future<Food?> _showAddFoodDialog() async {
-    String name = '';
-    double calories = 0;
-    double protein = 0;
-    double carbs = 0;
-    double fats = 0;
-    double addedSugar = 0;
-
-    return await showDialog<Food>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Add Workout Manually'),
-          content: SingleChildScrollView(
-            child: Column(
-              children: [
-                TextField(
-                  decoration: InputDecoration(labelText: 'Name'),
-                  onChanged: (val) => name = val,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Calories'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => calories = double.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Protein (g)'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => protein = double.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Carbs (g)'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => carbs = double.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Fats (g)'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => fats = double.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Added Sugar (g)'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => addedSugar = double.tryParse(val) ?? 0,
-                ),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (name.isNotEmpty && calories > 0) {
-                  Navigator.pop(
-                    context,
-                    Food(
-                      name: name,
-                      calories: calories,
-                      protein: protein,
-                      carbs: carbs,
-                      fats: fats,
-                      addedSugar: addedSugar,
-                    ),
-                  );
-                }
-              },
-              child: Text('Save'),
-            ),
-          ],
-        );
-      },
-    );
+    final newWorkout = await showAddWorkoutDialog();
+    if (newWorkout != null) addWorkout(newWorkout);
   }
 }
