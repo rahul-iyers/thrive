@@ -5,6 +5,7 @@ import 'models/habit.dart';
 import 'models/exercise.dart';
 import '../screens/add_exercise_screen.dart';
 import '../screens/view_exercises_screen.dart';
+import '../screens/nutrition_screen.dart';
 
 class DayDetailScreen extends StatefulWidget {
   final DateTime date;
@@ -52,6 +53,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       moodRating: moodRating,
       dietNotes: dietNotes,
       exercises: exercises,
+      foods: habit?.foods ?? [],
     );
     habitBox.put(key, newHabit);
   }
@@ -123,7 +125,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               child: Text('Add Exercise'),
             ),
 
-
             // View Exercises Button
             ElevatedButton(
               onPressed: () {
@@ -144,7 +145,30 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               child: Text('View Exercises'),
             ),
 
+            SizedBox(height: 16),
 
+            // 🥗 Nutrition Button
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.green.shade400,
+                foregroundColor: Colors.white,
+                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => NutritionScreen(habit: habit ?? Habit(
+                      sleepHours: sleepHours,
+                      moodRating: moodRating,
+                      dietNotes: dietNotes,
+                      exercises: exercises,
+                    )),
+                  ),
+                );
+              },
+              child: Text('Nutrition'),
+            ),
 
             SizedBox(height: 16),
 
