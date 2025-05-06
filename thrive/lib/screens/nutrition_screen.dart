@@ -53,23 +53,36 @@ class _NutritionScreenState extends State<NutritionScreen> {
   double get totalFats => habit.foods.fold(0, (sum, food) => sum + food.fats);
   double get totalSugar => habit.foods.fold(0, (sum, food) => sum + food.addedSugar);
 
+  void _saveDietNotes() {
+    habit.dietNotes = _dietNotesController.text;
+  }
+
+  Future<void> _handlePop() async {
+    _saveDietNotes();
+    Navigator.pop(context, habit);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Nutrition data saved!'),
+        duration: Duration(seconds: 2),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return WillPopScope(
       onWillPop: () async {
-        habit.dietNotes = _dietNotesController.text;
-        Navigator.pop(context, habit);
-        return false; // Prevent default pop, we handled it manually
+        await _handlePop();
+        return false;
       },
       child: Scaffold(
         appBar: AppBar(
           title: Text('Nutrition'),
           leading: IconButton(
             icon: Icon(Icons.arrow_back),
-            onPressed: () {
-              habit.dietNotes = _dietNotesController.text;
-              Navigator.pop(context, habit);
-            },
+            onPressed: _handlePop,
           ),
         ),
         body: Padding(
@@ -158,7 +171,8 @@ class _NutritionScreenState extends State<NutritionScreen> {
               margin: EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
                 title: Text(food.name),
-                subtitle: Text('${food.calories} cal | ${food.protein}g P | ${food.carbs}g C | ${food.fats}g F | ${food.addedSugar}g Sugar'),
+                subtitle: Text(
+                    '${food.calories} cal | ${food.protein}g P | ${food.carbs}g C | ${food.fats}g F | ${food.addedSugar}g Sugar'),
                 trailing: IconButton(
                   icon: Icon(Icons.close, color: Colors.red),
                   onPressed: () => deleteFood(index),
