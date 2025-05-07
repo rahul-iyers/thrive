@@ -99,42 +99,22 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
 
   Future<void> deleteWorkout(int index) async {
-    final confirmDelete = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Delete Workout?'),
-        content: Text('Are you sure you want to delete this workout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
-          ),
-          ElevatedButton(
-            // style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete'),
-          ),
-        ],
+    setState(() {
+      final updatedWorkout = List<Workout>.from(habit.workouts);
+      if (index >= 0 && index < updatedWorkout.length) {
+        updatedWorkout.removeAt(index);
+        habit.workouts = updatedWorkout;
+      }
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Workout deleted'),
+        duration: Duration(seconds: 2),
       ),
     );
-
-    if (confirmDelete == true) {
-      setState(() {
-        final updatedWorkout = List<Workout>.from(habit.workouts);
-        if (index >= 0 && index < updatedWorkout.length) {
-          updatedWorkout.removeAt(index);
-          habit.workouts = updatedWorkout;
-        }
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Workout deleted'),
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
   }
+
 
 
   Future<void> _editWorkout(BuildContext context, int index, Workout workout) async {
@@ -359,12 +339,78 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
+  Future<bool?> _confirmDeleteDialog(String workoutName) {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Workout?'),
+        content: Text('Are you sure you want to delete \"$workoutName\"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildWorkoutsList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text('Workouts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+        SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: Card(
+                color: Colors.yellow[100],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Icon(Icons.swipe_left, color: Colors.orange),
+                      SizedBox(height: 8),
+                      Text(
+                        'Swipe left to delete a workout',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: 12), // space between the two cards
+            Expanded(
+              child: Card(
+                color: Colors.blue[100],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(
+                    children: [
+                      Icon(Icons.fitness_center, color: Colors.blue),
+                      SizedBox(height: 8),
+                      Text(
+                        'Tap dumbbell to view exercises',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
         SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
@@ -380,6 +426,8 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           ),
         ),
         SizedBox(height: 12),
+
+
         habit.workouts.isEmpty
             ? Text('No workouts added yet.', style: TextStyle(color: Colors.grey))
             : ListView.builder(
@@ -388,61 +436,61 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           itemCount: habit.workouts.length,
           itemBuilder: (context, index) {
             final workout = habit.workouts[index];
-            return Card(
-              color: Colors.blue[50], // Light blue background
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 2,
-              margin: EdgeInsets.symmetric(vertical: 6),
-              child: ListTile(
-                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                title: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        workout.name,
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: Colors.blue[100], // Light blue background
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Text(
-                        '${workout.minutes.toStringAsFixed(0)} min',
-                        style: TextStyle(fontSize: 14, color: Colors.blue[800], fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
-                ),
-
-
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(height: 6), // Small space between title and chip
-                    _buildTypeChip(workout.type),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.fitness_center, color: Colors.blue),
-                      onPressed: () => _openExercisesPage(workout),
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => deleteWorkout(index),
-                    ),
-                  ],
-                ),
-                onTap: () => _editWorkout(context, index, workout),
+            return Dismissible(
+              key: ValueKey(workout.name + index.toString()),
+              direction: DismissDirection.endToStart,
+              background: Container(
+                color: Colors.redAccent,
+                alignment: Alignment.centerRight,
+                padding: EdgeInsets.symmetric(horizontal: 20),
+                child: Icon(Icons.delete, color: Colors.white),
               ),
-
+              confirmDismiss: (_) => _confirmDeleteDialog(workout.name),
+              onDismissed: (_) => deleteWorkout(index),
+              child: Card(
+                color: Colors.blue[50],
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                elevation: 2,
+                margin: EdgeInsets.symmetric(vertical: 6),
+                child: ListTile(
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  title: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          workout.name,
+                          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Container(
+                        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.blue[100],
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          '${workout.minutes.toStringAsFixed(0)} min',
+                          style: TextStyle(fontSize: 14, color: Colors.blue[800], fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  subtitle: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(height: 6),
+                      _buildTypeChip(workout.type),
+                    ],
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.fitness_center, color: Colors.blue, size: 30),
+                    onPressed: () => _openExercisesPage(workout),
+                  ),
+                  onTap: () => _editWorkout(context, index, workout),
+                ),
+              ),
             );
 
           },
