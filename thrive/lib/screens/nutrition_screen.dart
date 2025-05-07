@@ -112,23 +112,61 @@ class _NutritionScreenState extends State<NutritionScreen> {
 
   Widget _buildTotalsCard() {
     return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Daily Totals', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            _buildNutrientRow('Calories', totalCalories.toStringAsFixed(1)),
-            _buildNutrientRow('Protein (g)', totalProtein.toStringAsFixed(1)),
-            _buildNutrientRow('Carbs (g)', totalCarbs.toStringAsFixed(1)),
-            _buildNutrientRow('Fats (g)', totalFats.toStringAsFixed(1)),
-            _buildNutrientRow('Added Sugar (g)', totalSugar.toStringAsFixed(1)),
+            Text(
+              'Daily Totals',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildTotalTile('Calories', totalCalories.toStringAsFixed(0), Colors.orange),
+                _buildTotalTile('Protein (g)', totalProtein.toStringAsFixed(1), Colors.green),
+                _buildTotalTile('Carbs (g)', totalCarbs.toStringAsFixed(1), Colors.blue),
+                _buildTotalTile('Fats (g)', totalFats.toStringAsFixed(1), Colors.purple),
+                _buildTotalTile('Added Sugar (g)', totalSugar.toStringAsFixed(1), Colors.red),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildTotalTile(String label, String value, Color color) {
+    return Container(
+      width: 140, // <-- Fixed width for consistency
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 
   Widget _buildDietNotesCard() {
     return Card(
