@@ -2,7 +2,7 @@ import 'package:hive/hive.dart';
 
 part 'food.g.dart'; // This is needed for Hive type adapter
 
-@HiveType(typeId: 2)
+@HiveType(typeId: 3)
 class Food extends HiveObject {
   @HiveField(0)
   String name;

@@ -1,47 +1,41 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of 'food.dart';
+part of 'workout.dart';
 
 // **************************************************************************
 // TypeAdapterGenerator
 // **************************************************************************
 
-class FoodAdapter extends TypeAdapter<Food> {
+class WorkoutAdapter extends TypeAdapter<Workout> {
   @override
-  final int typeId = 3;
+  final int typeId = 2;
 
   @override
-  Food read(BinaryReader reader) {
+  Workout read(BinaryReader reader) {
     final numOfFields = reader.readByte();
     final fields = <int, dynamic>{
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
-    return Food(
+    return Workout(
       name: fields[0] as String,
-      calories: fields[1] as double,
-      carbs: fields[2] as double,
-      protein: fields[3] as double,
-      fats: fields[4] as double,
-      addedSugar: fields[5] as double,
+      type: fields[1] as String,
+      minutes: fields[2] as double,
+      exercises: (fields[3] as List?)?.cast<Exercise>(),
     );
   }
 
   @override
-  void write(BinaryWriter writer, Food obj) {
+  void write(BinaryWriter writer, Workout obj) {
     writer
-      ..writeByte(6)
+      ..writeByte(4)
       ..writeByte(0)
       ..write(obj.name)
       ..writeByte(1)
-      ..write(obj.calories)
+      ..write(obj.type)
       ..writeByte(2)
-      ..write(obj.carbs)
+      ..write(obj.minutes)
       ..writeByte(3)
-      ..write(obj.protein)
-      ..writeByte(4)
-      ..write(obj.fats)
-      ..writeByte(5)
-      ..write(obj.addedSugar);
+      ..write(obj.exercises);
   }
 
   @override
@@ -50,7 +44,7 @@ class FoodAdapter extends TypeAdapter<Food> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is FoodAdapter &&
+      other is WorkoutAdapter &&
           runtimeType == other.runtimeType &&
           typeId == other.typeId;
 }

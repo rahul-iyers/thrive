@@ -4,22 +4,35 @@ import 'calendar_screen.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
 import 'models/food.dart';
+import 'models/workout.dart';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Hive.initFlutter();
 
+  // Register all adapters
   Hive.registerAdapter(HabitAdapter());
   Hive.registerAdapter(ExerciseAdapter());
+  Hive.registerAdapter(WorkoutAdapter());
   Hive.registerAdapter(FoodAdapter());
 
-  await Hive.deleteBoxFromDisk('habits'); // clear old data (DELETES EVERYTHING)
-  await Hive.deleteBoxFromDisk('exercise_templates');
+  // Safely open all boxes
+  await openSafeBox<Habit>('habits');
+  await openSafeBox<Exercise>('exercise_templates');
+  await openSafeBox<Food>('food_templates');
 
-  await Hive.openBox<Habit>('habits');
-  await Hive.openBox<Exercise>('exercise_templates');
-  await Hive.openBox<Food>('food_templates');
   runApp(Thrive());
+}
+
+Future<Box<T>> openSafeBox<T>(String boxName) async {
+  try {
+    return await Hive.openBox<T>(boxName);
+  } catch (e) {
+    print('Error opening $boxName: $e');
+    print('Deleting and recreating $boxName...');
+    await Hive.deleteBoxFromDisk(boxName);
+    return await Hive.openBox<T>(boxName);
+  }
 }
 
 class Thrive extends StatelessWidget {

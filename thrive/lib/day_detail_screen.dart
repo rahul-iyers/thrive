@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
+import 'models/workout.dart';
 import 'screens/add_exercise_screen.dart';
 import 'screens/view_exercises_screen.dart';
 import 'screens/nutrition_screen.dart';
+import 'screens/workouts_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -24,6 +26,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   int moodRating = 5;
   String dietNotes = '';
   List<Exercise> exercises = [];
+  String workoutNotes = '';
 
   @override
   void initState() {
@@ -42,6 +45,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         moodRating = storedHabit.moodRating;
         dietNotes = storedHabit.dietNotes;
         exercises = storedHabit.exercises;
+        workoutNotes = storedHabit.workoutNotes;
       });
     }
   }
@@ -54,6 +58,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       dietNotes: dietNotes,
       exercises: exercises,
       foods: habit?.foods ?? [],
+      workouts: habit?.workouts ?? [],
+      workoutNotes: workoutNotes
     );
     habitBox.put(key, newHabit);
     habit = newHabit;
@@ -145,6 +151,38 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.blue,
+                foregroundColor: Colors.white,
+                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () async {
+                final updatedHabit = await Navigator.push<Habit>(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => WorkoutsScreen(habit: habit ?? Habit(
+                      sleepHours: sleepHours,
+                      moodRating: moodRating,
+                      dietNotes: dietNotes,
+                      exercises: exercises,
+                      foods: [],
+                      workoutNotes: workoutNotes
+                    )),
+                  ),
+                );
+
+                if (updatedHabit != null) {
+                  setState(() {
+                    habit = updatedHabit;
+                    workoutNotes = updatedHabit.workoutNotes;
+                  });
+                  saveHabit();
+                }
+              },
+              child: Text('Workouts'),
+            ),
+
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.green.shade400,
                 foregroundColor: Colors.white,
                 textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -159,6 +197,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       dietNotes: dietNotes,
                       exercises: exercises,
                       foods: [],
+                      workoutNotes: workoutNotes
                     )),
                   ),
                 );

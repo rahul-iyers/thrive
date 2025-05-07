@@ -177,6 +177,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                   icon: Icon(Icons.close, color: Colors.red),
                   onPressed: () => deleteFood(index),
                 ),
+                onTap: () => _editFood(context, index, food),
               ),
             );
           },
@@ -196,6 +197,94 @@ class _NutritionScreenState extends State<NutritionScreen> {
         ],
       ),
     );
+  }
+
+  void _editFood(BuildContext context, int index, Food food) async {
+    String name = food.name;
+    double calories = food.calories;
+    double protein = food.protein;
+    double carbs = food.carbs;
+    double fats = food.fats;
+    double addedSugar = food.addedSugar;
+
+    final updatedFood = await showDialog<Food>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Food'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                TextField(
+                  controller: TextEditingController(text: name),
+                  decoration: InputDecoration(labelText: 'Name'),
+                  onChanged: (val) => name = val,
+                ),
+                TextField(
+                  controller: TextEditingController(text: calories.toString()),
+                  decoration: InputDecoration(labelText: 'Calories'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => calories = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  controller: TextEditingController(text: protein.toString()),
+                  decoration: InputDecoration(labelText: 'Protein'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => protein = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  controller: TextEditingController(text: carbs.toString()),
+                  decoration: InputDecoration(labelText: 'Carbs'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => carbs = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  controller: TextEditingController(text: fats.toString()),
+                  decoration: InputDecoration(labelText: 'Fats'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => fats = double.tryParse(val) ?? 0,
+                ),
+                TextField(
+                  controller: TextEditingController(text: addedSugar.toString()),
+                  decoration: InputDecoration(labelText: 'Added Sugar'),
+                  keyboardType: TextInputType.number,
+                  onChanged: (val) => addedSugar = double.tryParse(val) ?? 0,
+                ),
+
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(
+                  context,
+                  Food(
+                    name: name,
+                    calories: calories,
+                    protein: protein,
+                    carbs: carbs,
+                    fats: fats,
+                    addedSugar: addedSugar,
+                  ),
+                );
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (updatedFood != null) {
+      setState(() {
+        habit.foods[index] = updatedFood;
+      });
+    }
   }
 
   void _showFoodOptions() async {
