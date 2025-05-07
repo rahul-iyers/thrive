@@ -28,6 +28,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   List<Exercise> exercises = [];
   String workoutNotes = '';
   String dailyNotes = '';
+  int sleepQuality = 3;
+  String sleepNotes = '';
 
   @override
   void initState() {
@@ -48,6 +50,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         exercises = storedHabit.exercises;
         workoutNotes = storedHabit.workoutNotes;
         dailyNotes = storedHabit.dailyNotes;
+        sleepQuality = storedHabit.sleepQuality;
+        sleepNotes = storedHabit.sleepNotes;
       });
     }
   }
@@ -63,6 +67,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       workouts: habit?.workouts ?? [],
       workoutNotes: workoutNotes,
       dailyNotes: dailyNotes,
+      sleepQuality: sleepQuality,
+      sleepNotes: sleepNotes,
     );
     habitBox.put(key, newHabit);
     habit = newHabit;
@@ -106,18 +112,28 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               label: 'Sleep',
               color: Colors.indigoAccent,
               onPressed: () async {
-                final updatedSleep = await Navigator.push<double>(
+                final updatedSleepData = await Navigator.push<Map<String, dynamic>>(
                   context,
-                  MaterialPageRoute(builder: (context) => SleepEntryScreen(initialSleepHours: sleepHours)),
+                  MaterialPageRoute(
+                    builder: (context) => SleepEntryScreen(
+                      initialSleepHours: sleepHours,
+                      initialSleepQuality: sleepQuality,
+                      initialSleepNotes: sleepNotes,
+                    ),
+                  ),
                 );
-                if (updatedSleep != null) {
+
+                if (updatedSleepData != null) {
                   setState(() {
-                    sleepHours = updatedSleep;
+                    sleepHours = updatedSleepData['sleepHours'];
+                    sleepQuality = updatedSleepData['sleepQuality'];
+                    sleepNotes = updatedSleepData['sleepNotes'];
                   });
                   saveHabit();
                 }
               },
             ),
+
 
             SizedBox(height: 12),
             _buildCategoryButton(
