@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/food.dart';
 import '../models/habit.dart';
 import '../screens/food_templates_screen.dart';
+import 'package:hive/hive.dart';
 
 class NutritionScreen extends StatefulWidget {
   final Habit habit;
@@ -329,10 +330,10 @@ class _NutritionScreenState extends State<NutritionScreen> {
     final pickedOption = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Add Food'),
+        title: Text('Add Food', style: TextStyle(fontWeight: FontWeight.bold)),
         content: Text('Choose how you want to add food:'),
         actions: [
-          ElevatedButton(
+          TextButton(
             onPressed: () => Navigator.pop(context, 'manual'),
             child: Text('Manual Entry'),
           ),
@@ -348,15 +349,107 @@ class _NutritionScreenState extends State<NutritionScreen> {
       final newFood = await _showAddFoodDialog();
       if (newFood != null) addFood(newFood);
     } else if (pickedOption == 'template') {
-      final selectedFood = await Navigator.push<Food>(
-        context,
-        MaterialPageRoute(builder: (context) => FoodTemplatesScreen()),
-      );
+      final selectedFood = await _showPickTemplateDialog();
       if (selectedFood != null) addFood(selectedFood);
     }
   }
 
-  Future<Food?> _showAddFoodDialog() async {
+  Future<Food?> _showPickTemplateDialog() async {
+    final templatesBox = Hive.box<Food>('food_templates');
+    List<Food> templates = templatesBox.values.toList();
+    List<Food> filteredTemplates = List.from(templates); // Start with everything shown
+    TextEditingController _searchController = TextEditingController();
+
+    if (templates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No templates available')),
+      );
+    }
+
+    return await showDialog<Food>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return AlertDialog(
+              title: Text('Pick a Food Template', style: TextStyle(fontWeight: FontWeight.bold)),
+              content: SizedBox(
+                width: double.maxFinite,
+                height: 500,
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search foods...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onChanged: (query) {
+                        setState(() {
+                          filteredTemplates = templates.where((food) {
+                            return food.name.toLowerCase().contains(query.toLowerCase());
+                          }).toList();
+                        });
+                      },
+                    ),
+                    SizedBox(height: 12),
+                    Expanded(
+                      child: filteredTemplates.isEmpty
+                          ? Center(child: Text('No results found.'))
+                          : ListView.builder(
+                        itemCount: filteredTemplates.length,
+                        itemBuilder: (context, index) {
+                          final food = filteredTemplates[index];
+                          return Card(
+                            color: Colors.green[50],
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            margin: EdgeInsets.symmetric(vertical: 6),
+                            child: ListTile(
+                              leading: Icon(Icons.restaurant_menu, color: Colors.green),
+                              title: Text(food.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                '${food.calories} cal • ${food.protein}g P • ${food.carbs}g C • ${food.fats}g F',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              onTap: () => Navigator.pop(context, food),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () async {
+                    final newFood = await _showCreateTemplateDialog();
+                    if (newFood != null) {
+                      await templatesBox.add(newFood);
+                      templates = templatesBox.values.toList();
+                      _searchController.clear();
+                      setState(() {
+                        filteredTemplates = List.from(templates);
+                      });
+                    }
+                  },
+                  child: Text('New Template'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+  Future<Food?> _showCreateTemplateDialog() async {
     String name = '';
     double calories = 0;
     double protein = 0;
@@ -368,7 +461,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add Food Manually'),
+          title: Text('Create New Template'),
           content: SingleChildScrollView(
             child: Column(
               children: [
@@ -405,10 +498,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
             ElevatedButton(
               onPressed: () {
                 if (name.isNotEmpty && calories > 0) {
@@ -432,4 +522,98 @@ class _NutritionScreenState extends State<NutritionScreen> {
       },
     );
   }
+
+
+
+  Future<Food?> _showAddFoodDialog() async {
+    String name = '';
+    double calories = 0;
+    double protein = 0;
+    double carbs = 0;
+    double fats = 0;
+    double addedSugar = 0;
+
+    return await showDialog<Food>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add Food Manually', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Food Name',
+                    hintText: 'e.g. Chicken Breast',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  onChanged: (val) => name = val,
+                ),
+                SizedBox(height: 20),
+                Text('Macros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                SizedBox(height: 10),
+                _buildNumberInputField('Calories', (val) => calories = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Protein (g)', (val) => protein = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Carbs (g)', (val) => carbs = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Fats (g)', (val) => fats = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Added Sugar (g)', (val) => addedSugar = double.tryParse(val) ?? 0),
+              ],
+            ),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (name.isNotEmpty && calories > 0) {
+                        Navigator.pop(
+                          context,
+                          Food(
+                            name: name,
+                            calories: calories,
+                            protein: protein,
+                            carbs: carbs,
+                            fats: fats,
+                            addedSugar: addedSugar,
+                          ),
+                        );
+                      }
+                    },
+                    child: Text('Save'),
+                  ),
+                ),
+              ],
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildNumberInputField(String label, Function(String) onChanged) {
+    return TextField(
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      keyboardType: TextInputType.number,
+      onChanged: onChanged,
+    );
+  }
+
 }
