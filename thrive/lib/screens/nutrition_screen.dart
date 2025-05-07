@@ -96,14 +96,14 @@ class _NutritionScreenState extends State<NutritionScreen> {
               SizedBox(height: 16),
               _buildFoodsList(),
               SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _showFoodOptions,
-                child: Text('Add Food'),
-              ),
+              // ElevatedButton(
+              //   style: ElevatedButton.styleFrom(
+              //     backgroundColor: Colors.green,
+              //     foregroundColor: Colors.white,
+              //   ),
+              //   onPressed: _showFoodOptions,
+              //   child: Text('Add Food'),
+              // ),
             ],
           ),
         ),
@@ -198,6 +198,20 @@ class _NutritionScreenState extends State<NutritionScreen> {
       children: [
         Text('Foods', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _showFoodOptions,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: Text('Add Food', style: TextStyle(fontSize: 16)),
+          ),
+        ),
+        SizedBox(height: 12),
         habit.foods.isEmpty
             ? Text('No foods added yet.', style: TextStyle(color: Colors.grey))
             : ListView.builder(
@@ -357,27 +371,46 @@ class _NutritionScreenState extends State<NutritionScreen> {
   Future<Food?> _showPickTemplateDialog() async {
     final templatesBox = Hive.box<Food>('food_templates');
     List<Food> templates = templatesBox.values.toList();
-    List<Food> filteredTemplates = List.from(templates); // Start with everything shown
+    List<Food> filteredTemplates = List.from(templates);
     TextEditingController _searchController = TextEditingController();
 
     if (templates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No templates available')),
       );
+      return null;
     }
 
-    return await showDialog<Food>(
+    return await showModalBottomSheet<Food>(
       context: context,
+      isScrollControlled: true, // allows the sheet to be tall
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setState) {
-            return AlertDialog(
-              title: Text('Pick a Food Template', style: TextStyle(fontWeight: FontWeight.bold)),
-              content: SizedBox(
-                width: double.maxFinite,
-                height: 500,
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: SafeArea(
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
+                    Container(
+                      height: 6,
+                      width: 60,
+                      margin: EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
                     TextField(
                       controller: _searchController,
                       decoration: InputDecoration(
@@ -397,14 +430,15 @@ class _NutritionScreenState extends State<NutritionScreen> {
                     Expanded(
                       child: filteredTemplates.isEmpty
                           ? Center(child: Text('No results found.'))
-                          : ListView.builder(
+                          : ListView.separated(
+                        shrinkWrap: true,
                         itemCount: filteredTemplates.length,
+                        separatorBuilder: (context, index) => SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final food = filteredTemplates[index];
                           return Card(
                             color: Colors.green[50],
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            margin: EdgeInsets.symmetric(vertical: 6),
                             child: ListTile(
                               leading: Icon(Icons.restaurant_menu, color: Colors.green),
                               title: Text(food.name, style: TextStyle(fontWeight: FontWeight.bold)),
@@ -418,35 +452,45 @@ class _NutritionScreenState extends State<NutritionScreen> {
                         },
                       ),
                     ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final newFood = await _showCreateTemplateDialog();
+                              if (newFood != null) {
+                                await templatesBox.add(newFood);
+                                templates = templatesBox.values.toList();
+                                _searchController.clear();
+                                setState(() {
+                                  filteredTemplates = List.from(templates);
+                                });
+                              }
+                            },
+                            child: Text('New Template'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
                   ],
                 ),
               ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: Text('Cancel'),
-                ),
-                ElevatedButton(
-                  onPressed: () async {
-                    final newFood = await _showCreateTemplateDialog();
-                    if (newFood != null) {
-                      await templatesBox.add(newFood);
-                      templates = templatesBox.values.toList();
-                      _searchController.clear();
-                      setState(() {
-                        filteredTemplates = List.from(templates);
-                      });
-                    }
-                  },
-                  child: Text('New Template'),
-                ),
-              ],
             );
           },
         );
       },
     );
   }
+
 
 
   Future<Food?> _showCreateTemplateDialog() async {
