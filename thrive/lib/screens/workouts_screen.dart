@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:thrive/models/workout.dart';
 import '../models/habit.dart';
+import 'exercises_screen.dart';
 import '../models/exercise.dart';
 import '../screens/exercise_templates_screen.dart';
 
@@ -48,6 +49,15 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
         habit.workouts = updatedWorkout;
       }
     });
+  }
+
+  void _navigateToExercises(BuildContext context, Workout workout) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExercisesScreen(workout: workout),
+      ),
+    );
   }
 
   double get totalMinutes => habit.workouts.fold(0, (sum, workout) => sum + workout.minutes);
@@ -138,7 +148,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               controller: _workoutNotesController,
               maxLines: 3,
               decoration: InputDecoration(
-                hintText: 'Write notes about your workout here',
+                hintText: 'Write notes about your workouts here',
                 border: OutlineInputBorder(),
               ),
             ),
@@ -168,10 +178,20 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                 title: Text(workout.name),
                 subtitle: Text(
                     '${workout.type} | ${workout.minutes} min '),
-                trailing: IconButton(
-                  icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: () => deleteWorkout(index),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    TextButton(
+                      onPressed: () => _navigateToExercises(context, habit.workouts[index]),
+                      child: Text('Exercises'),
+                    ),
+                    IconButton(
+                      icon: Icon(Icons.close, color: Colors.red),
+                      onPressed: () => deleteWorkout(index),
+                    ),
+                  ],
                 ),
+
                 onTap: () => _editWorkout(context, index, workout),
               ),
             );
@@ -198,6 +218,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     String name = workout.name;
     String type = workout.type;
     double minutes = workout.minutes;
+    List<Exercise> existingExercises = List.from(workout.exercises); // <-- copy existing exercises
 
     final updatedWorkout = await showDialog<Workout>(
       context: context,
@@ -239,6 +260,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                     name: name,
                     type: type,
                     minutes: minutes,
+                    exercises: existingExercises, // <-- restore exercises
                   ),
                 );
               },
