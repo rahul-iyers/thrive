@@ -59,6 +59,32 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
+  Widget _buildTextInput(String label, Function(String) onChanged, {String initialValue = ''}) {
+    return TextField(
+      controller: TextEditingController(text: initialValue),
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      onChanged: onChanged,
+    );
+  }
+
+  Widget _buildNumberInputField(String label, Function(String) onChanged, {String initialValue = ''}) {
+    return TextField(
+      controller: TextEditingController(text: initialValue),
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      keyboardType: TextInputType.numberWithOptions(decimal: true),
+      onChanged: onChanged,
+    );
+  }
+
+
   void addWorkout(Workout workout) {
     setState(() {
       final updatedWorkout = List<Workout>.from(habit.workouts);
@@ -120,60 +146,44 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Edit Workout'),
+          title: Text('Edit Workout', style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  controller: TextEditingController(text: name),
-                  decoration: InputDecoration(labelText: 'Name'),
-                  onChanged: (val) => name = val,
-                ),
-                TextField(
-                  controller: TextEditingController(text: type),
-                  decoration: InputDecoration(labelText: 'Type'),
-                  onChanged: (val) => type = val,
-                ),
-                TextField(
-                  controller: TextEditingController(text: minutes.toString()),
-                  decoration: InputDecoration(
-                    labelText: 'Minutes',
-                    hintText: 'Enter minutes (e.g., 30)',
-                  ),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (val) {
-                    if (val.isEmpty) {
-                      minutes = 0;
-                    } else {
-                      final parsed = double.tryParse(val);
-                      if (parsed != null && parsed >= 0) {
-                        minutes = parsed;
-                      }
-                    }
-                  },
-                ),
-
+                _buildTextInput('Workout Name', (val) => name = val, initialValue: name),
+                SizedBox(height: 20),
+                Text('Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                SizedBox(height: 10),
+                _buildTextInput('Workout Type', (val) => type = val, initialValue: type),
+                SizedBox(height: 8),
+                _buildNumberInputField('Minutes', (val) => minutes = double.tryParse(val) ?? 0, initialValue: minutes.toString()),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.pop(
-                  context,
-                  Workout(
-                    name: name,
-                    type: type,
-                    minutes: minutes,
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
                   ),
-                );
-              },
-              child: Text('Save'),
-            ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      Navigator.pop(
+                        context,
+                        Workout(name: name, type: type, minutes: minutes),
+                      );
+                    },
+                    child: Text('Save'),
+                  ),
+                ),
+              ],
+            )
           ],
         );
       },
@@ -202,56 +212,46 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Create a Workout'),
+          title: Text('Create a Workout', style: TextStyle(fontWeight: FontWeight.bold)),
           content: SingleChildScrollView(
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TextField(
-                  decoration: InputDecoration(labelText: 'Name'),
-                  onChanged: (val) => name = val,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Type'),
-                  onChanged: (val) => type = val,
-                ),
-                TextField(
-                  controller: TextEditingController(text: minutes.toString()),
-                  decoration: InputDecoration(
-                    labelText: 'Minutes',
-                    hintText: 'Enter minutes (e.g., 30)',
-                  ),
-                  keyboardType: TextInputType.numberWithOptions(decimal: true),
-                  onChanged: (val) {
-                    if (val.isEmpty) {
-                      minutes = 0;
-                    } else {
-                      final parsed = double.tryParse(val);
-                      if (parsed != null && parsed >= 0) {
-                        minutes = parsed;
-                      }
-                    }
-                  },
-                ),
-
+                _buildTextInput('Workout Name', (val) => name = val),
+                SizedBox(height: 20),
+                Text('Details', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                SizedBox(height: 10),
+                _buildTextInput('Workout Type', (val) => type = val),
+                SizedBox(height: 8),
+                _buildNumberInputField('Minutes', (val) => minutes = double.tryParse(val) ?? 0),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                if (name.isNotEmpty) {
-                  Navigator.pop(
-                    context,
-                    Workout(name: name, type: type, minutes: minutes),
-                  );
-                }
-              },
-              child: Text('Save'),
-            ),
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (name.isNotEmpty) {
+                        Navigator.pop(
+                          context,
+                          Workout(name: name, type: type, minutes: minutes),
+                        );
+                      }
+                    },
+                    child: Text('Save'),
+                  ),
+                ),
+              ],
+            )
           ],
         );
       },
@@ -276,16 +276,53 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
 
   Widget _buildTotalsCard() {
     return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Daily Totals', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            _buildWorkoutRow('Workout Minutes', totalMinutes.toStringAsFixed(1)),
+            Text(
+              'Daily Totals',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildTotalTile('Workout Minutes', totalMinutes.toStringAsFixed(1), Colors.blueAccent),
+                // In future if you want to add more like "Total Workouts" etc, you can add here
+              ],
+            ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildTotalTile(String label, String value, Color color) {
+    return Container(
+      width: 140, // Same width for consistency
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
       ),
     );
   }
@@ -329,6 +366,20 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       children: [
         Text('Workouts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _createWorkout,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.blueAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: Text('Add Workout', style: TextStyle(fontSize: 16)),
+          ),
+        ),
+        SizedBox(height: 12),
         habit.workouts.isEmpty
             ? Text('No workouts added yet.', style: TextStyle(color: Colors.grey))
             : ListView.builder(
@@ -338,21 +389,42 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
           itemBuilder: (context, index) {
             final workout = habit.workouts[index];
             return Card(
+              color: Colors.blue[50], // Light blue background
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              elevation: 2,
               margin: EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
                 contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                title: Text(
-                  workout.name,
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        workout.name,
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.blue[100], // Light blue background
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${workout.minutes.toStringAsFixed(0)} min',
+                        style: TextStyle(fontSize: 14, color: Colors.blue[800], fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
                 ),
+
+
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    SizedBox(height: 4),
-                    Text(
-                      '${workout.type} | ${workout.minutes.toStringAsFixed(0)} min',
-                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
-                    ),
+                    SizedBox(height: 6), // Small space between title and chip
+                    _buildTypeChip(workout.type),
                   ],
                 ),
                 trailing: Row(
@@ -370,6 +442,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                 ),
                 onTap: () => _editWorkout(context, index, workout),
               ),
+
             );
 
           },
@@ -377,6 +450,31 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       ],
     );
   }
+
+  Widget _buildTypeChip(String type) {
+    Color chipColor;
+
+    switch (type.toLowerCase()) {
+      case 'cardio':
+        chipColor = Colors.redAccent;
+        break;
+      case 'gym':
+        chipColor = Colors.blueAccent;
+        break;
+      case 'sport':
+        chipColor = Colors.green;
+        break;
+      default:
+        chipColor = Colors.grey;
+    }
+
+    return Chip(
+      label: Text(type, style: TextStyle(color: Colors.white)),
+      backgroundColor: chipColor,
+      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+    );
+  }
+
 
   Widget _buildWorkoutRow(String label, String value) {
     return Padding(
@@ -416,10 +514,10 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
               SizedBox(height: 16),
               _buildWorkoutsList(),
               SizedBox(height: 20),
-              ElevatedButton(
-                onPressed: _createWorkout,
-                child: Text('Add Workout'),
-              ),
+              // ElevatedButton(
+              //   onPressed: _createWorkout,
+              //   child: Text('Add Workout'),
+              // ),
             ],
           ),
         ),
