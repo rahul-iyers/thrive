@@ -14,19 +14,53 @@ class WorkoutsScreen extends StatefulWidget {
   _WorkoutsScreenState createState() => _WorkoutsScreenState();
 }
 
-class _WorkoutsScreenState extends State<WorkoutsScreen> {
+class _WorkoutsScreenState extends State<WorkoutsScreen> with SingleTickerProviderStateMixin{
   late Habit habit;
   late TextEditingController _workoutNotesController;
+  bool _showTips = true;
+  double _tipsOpacity = 1.0;
+  late AnimationController _slideController;
+  late Animation<Offset> _slideAnimation;
 
   @override
   void initState() {
     super.initState();
     habit = widget.habit;
     _workoutNotesController = TextEditingController(text: habit.workoutNotes);
+
+    _slideController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 600),
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: Offset(0, 0),
+      end: Offset(0, -0.2), // Slide UP slightly
+    ).animate(CurvedAnimation(parent: _slideController, curve: Curves.easeOut));
+
+    // Start auto fade + slide after 5 seconds
+    Future.delayed(Duration(seconds: 5), () {
+      if (mounted) {
+        setState(() {
+          _tipsOpacity = 0.0;
+        });
+        _slideController.forward(); // <--- ADD THIS (SLIDE UP)
+        Future.delayed(Duration(milliseconds: 600), () {
+          if (mounted) {
+            setState(() {
+              _showTips = false;
+            });
+          }
+        });
+      }
+    });
   }
+
+
 
   @override
   void dispose() {
+    _slideController.dispose();
     _workoutNotesController.dispose();
     super.dispose();
   }
@@ -366,51 +400,86 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
       children: [
         Text('Workouts', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: Card(
-                color: Colors.yellow[100],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      Icon(Icons.swipe_left, color: Colors.orange),
-                      SizedBox(height: 8),
-                      Text(
-                        'Swipe left to delete a workout',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+        if (_showTips) ...[
+          SlideTransition(
+            position: _slideAnimation,
+            child:AnimatedOpacity(
+              duration: Duration(milliseconds: 600),
+              opacity: _tipsOpacity,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TweenAnimationBuilder(
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: Duration(milliseconds: 1000),
+                      curve: Curves.easeOutBack,
+                      builder: (context, double scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: child,
+                        );
+                      },
+                      child: Card(
+                        color: Colors.yellow[100],
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            children: [
+                              Icon(Icons.swipe_left, color: Colors.orange),
+                              SizedBox(height: 8),
+                              Text(
+                                'Swipe left to delete a workout',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  SizedBox(width: 12),
+                  Expanded(
+                    child: TweenAnimationBuilder(
+                      tween: Tween<double>(begin: 0, end: 1),
+                      duration: Duration(milliseconds: 700),
+                      curve: Curves.easeOutBack,
+                      builder: (context, double scale, child) {
+                        return Transform.scale(
+                          scale: scale,
+                          child: child,
+                        );
+                      },
+                      child: Card(
+                        color: Colors.blue[100],
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            children: [
+                              Icon(Icons.fitness_center, color: Colors.blue),
+                              SizedBox(height: 8),
+                              Text(
+                                'Tap dumbbell to view exercises',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-            SizedBox(width: 12), // space between the two cards
-            Expanded(
-              child: Card(
-                color: Colors.blue[100],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    children: [
-                      Icon(Icons.fitness_center, color: Colors.blue),
-                      SizedBox(height: 8),
-                      Text(
-                        'Tap dumbbell to view exercises',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+          SizedBox(height: 16),
+        ],
+
+
         SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
