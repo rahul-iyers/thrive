@@ -163,7 +163,9 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
   void _showPickTemplateDialog() async {
     final templatesBox = Hive.box<Exercise>('exercise_templates');
-    final templates = templatesBox.values.toList();
+    List<Exercise> templates = templatesBox.values.toList();
+    List<Exercise> filteredTemplates = List.from(templates);
+    TextEditingController _searchController = TextEditingController();
 
     if (templates.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -172,74 +174,129 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       return;
     }
 
-    final selectedExercise = await showDialog<Exercise>(
+    final selectedExercise = await showModalBottomSheet<Exercise>(
       context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
       builder: (context) {
-        return AlertDialog(
-          title: Text('Pick a Template'),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: templates.length,
-              itemBuilder: (context, index) {
-                final exercise = templates[index];
-                return Card(
-                  color: Colors.blue[50],
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 3,
-                  margin: EdgeInsets.symmetric(vertical: 6),
-                  child: ListTile(
-                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                    title: Text(
-                      exercise.name,
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 6,
+                      width: 60,
+                      margin: EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(3),
+                      ),
                     ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search exercises...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onChanged: (query) {
+                        setState(() {
+                          filteredTemplates = templates.where((exercise) {
+                            return exercise.name.toLowerCase().contains(query.toLowerCase());
+                          }).toList();
+                        });
+                      },
+                    ),
+                    SizedBox(height: 12),
+                    Expanded(
+                      child: filteredTemplates.isEmpty
+                          ? Center(child: Text('No results found.'))
+                          : ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: filteredTemplates.length,
+                        separatorBuilder: (context, index) => SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final exercise = filteredTemplates[index];
+                          return Card(
+                            color: Colors.blue[50],
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                              title: Text(
+                                exercise.name,
+                                style: TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (exercise.sets > 0 || exercise.reps.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 4),
+                                      child: Text('${exercise.sets} sets × ${exercise.reps} reps'),
+                                    ),
+                                  if (exercise.weight.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: Text('Weight: ${exercise.weight}', style: TextStyle(fontSize: 13)),
+                                    ),
+                                  if (exercise.notes.isNotEmpty)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 2),
+                                      child: Text(exercise.notes, style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
+                                    ),
+                                ],
+                              ),
+                              onTap: () => Navigator.pop(context, exercise),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
                       children: [
-                        if (exercise.sets > 0 || exercise.reps.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 4),
-                            child: Text('${exercise.sets} sets × ${exercise.reps} reps'),
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
                           ),
-                        if (exercise.weight.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text('Weight: ${exercise.weight}', style: TextStyle(fontSize: 13, color: Colors.grey[700])),
-                          ),
-                        if (exercise.notes.isNotEmpty)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(exercise.notes, style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
-                          ),
+                        ),
                       ],
                     ),
-                    onTap: () => Navigator.pop(context, exercise),
-                  ),
-                );
-              },
-            ),
-          ),
+                    SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
 
-
     if (selectedExercise != null) {
       final confirm = await _showTemplatePreviewDialog(selectedExercise);
       if (confirm) {
-        addExercise(
-          Exercise(
-            name: selectedExercise.name,
-            minutes: selectedExercise.minutes,
-            sets: selectedExercise.sets,
-            reps: selectedExercise.reps,
-            weight: selectedExercise.weight,
-            notes: selectedExercise.notes,
-            type: selectedExercise.type,
-          ),
-        );
+        addExercise(Exercise(
+          name: selectedExercise.name,
+          minutes: selectedExercise.minutes,
+          sets: selectedExercise.sets,
+          reps: selectedExercise.reps,
+          weight: selectedExercise.weight,
+          notes: selectedExercise.notes,
+          type: selectedExercise.type,
+        ));
       }
     }
   }
