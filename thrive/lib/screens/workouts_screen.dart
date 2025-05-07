@@ -60,34 +60,61 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
   }
 
   void addWorkout(Workout workout) {
-    final updatedWorkouts = List<Workout>.from(habit.workouts);
-    updatedWorkouts.add(workout);
-
     setState(() {
-      habit.workouts = updatedWorkouts;
+      final updatedWorkout = List<Workout>.from(habit.workouts);
+      updatedWorkout.add(workout);
+      habit.workouts = updatedWorkout;
     });
 
-    _saveHabit(); // no await to avoid blocking UI
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Workout added!'), duration: Duration(seconds: 2)),
+    );
   }
 
-  void deleteWorkout(int index) {
-    final updatedWorkouts = List<Workout>.from(habit.workouts);
-    if (index >= 0 && index < updatedWorkouts.length) {
-      updatedWorkouts.removeAt(index);
+
+  Future<void> deleteWorkout(int index) async {
+    final confirmDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Workout?'),
+        content: Text('Are you sure you want to delete this workout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel'),
+          ),
+          ElevatedButton(
+            // style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmDelete == true) {
+      setState(() {
+        final updatedWorkout = List<Workout>.from(habit.workouts);
+        if (index >= 0 && index < updatedWorkout.length) {
+          updatedWorkout.removeAt(index);
+          habit.workouts = updatedWorkout;
+        }
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Workout deleted'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
-
-    setState(() {
-      habit.workouts = updatedWorkouts;
-    });
-
-    _saveHabit(); // no await
   }
+
 
   Future<void> _editWorkout(BuildContext context, int index, Workout workout) async {
     String name = workout.name;
     String type = workout.type;
     double minutes = workout.minutes;
-    final exercisesCopy = List<Exercise>.from(workout.exercises);
 
     final updatedWorkout = await showDialog<Workout>(
       context: context,
@@ -109,10 +136,23 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                 ),
                 TextField(
                   controller: TextEditingController(text: minutes.toString()),
-                  decoration: InputDecoration(labelText: 'Minutes'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => minutes = double.tryParse(val) ?? 0,
+                  decoration: InputDecoration(
+                    labelText: 'Minutes',
+                    hintText: 'Enter minutes (e.g., 30)',
+                  ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (val) {
+                    if (val.isEmpty) {
+                      minutes = 0;
+                    } else {
+                      final parsed = double.tryParse(val);
+                      if (parsed != null && parsed >= 0) {
+                        minutes = parsed;
+                      }
+                    }
+                  },
                 ),
+
               ],
             ),
           ),
@@ -129,7 +169,6 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                     name: name,
                     type: type,
                     minutes: minutes,
-                    exercises: exercisesCopy,
                   ),
                 );
               },
@@ -141,14 +180,16 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
 
     if (updatedWorkout != null) {
-      final updatedWorkouts = List<Workout>.from(habit.workouts);
-      updatedWorkouts[index] = updatedWorkout;
-
       setState(() {
-        habit.workouts = updatedWorkouts;
+        habit.workouts[index] = updatedWorkout;
       });
 
-      await _saveHabit();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Workout updated!'),
+          duration: Duration(seconds: 2),
+        ),
+      );
     }
   }
 
@@ -174,10 +215,24 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                   onChanged: (val) => type = val,
                 ),
                 TextField(
-                  decoration: InputDecoration(labelText: 'Minutes'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => minutes = double.tryParse(val) ?? 0,
+                  controller: TextEditingController(text: minutes.toString()),
+                  decoration: InputDecoration(
+                    labelText: 'Minutes',
+                    hintText: 'Enter minutes (e.g., 30)',
+                  ),
+                  keyboardType: TextInputType.numberWithOptions(decimal: true),
+                  onChanged: (val) {
+                    if (val.isEmpty) {
+                      minutes = 0;
+                    } else {
+                      final parsed = double.tryParse(val);
+                      if (parsed != null && parsed >= 0) {
+                        minutes = parsed;
+                      }
+                    }
+                  },
                 ),
+
               ],
             ),
           ),
@@ -258,6 +313,16 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
     );
   }
 
+  void _openExercisesPage(Workout workout) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ExercisesScreen(workout: workout),
+      ),
+    );
+  }
+
+
   Widget _buildWorkoutsList() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,17 +340,30 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
             return Card(
               margin: EdgeInsets.symmetric(vertical: 6),
               child: ListTile(
-                title: Text(workout.name),
-                subtitle: Text('${workout.type} | ${workout.minutes} min'),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                title: Text(
+                  workout.name,
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SizedBox(height: 4),
+                    Text(
+                      '${workout.type} | ${workout.minutes.toStringAsFixed(0)} min',
+                      style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                    ),
+                  ],
+                ),
                 trailing: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TextButton(
-                      onPressed: () => _navigateToExercises(workout),
-                      child: Text('Exercises'),
+                    IconButton(
+                      icon: Icon(Icons.fitness_center, color: Colors.blue),
+                      onPressed: () => _openExercisesPage(workout),
                     ),
                     IconButton(
-                      icon: Icon(Icons.close, color: Colors.red),
+                      icon: Icon(Icons.delete, color: Colors.red),
                       onPressed: () => deleteWorkout(index),
                     ),
                   ],
@@ -293,6 +371,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> {
                 onTap: () => _editWorkout(context, index, workout),
               ),
             );
+
           },
         ),
       ],

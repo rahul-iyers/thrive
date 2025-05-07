@@ -32,7 +32,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     await workout.save();
   }
 
-  Future<void> deleteExercise(int index) async {
+  void _deleteExercise(int index) async {
     final updatedExercises = List<Exercise>.from(workout.exercises);
     updatedExercises.removeAt(index);
 
@@ -42,6 +42,34 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
 
     await workout.save();
   }
+
+
+  void _confirmDeleteExercise(int index) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Delete Exercise?'),
+        content: Text('Are you sure you want to delete this exercise?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context), // Cancel
+            child: Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () {
+              _deleteExercise(index); // ✅ Actually delete the exercise
+              Navigator.pop(context); // ✅ Then close the dialog
+            },
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Colors.red),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Future<void> editExercise(int index, Exercise exercise) async {
     final updatedExercises = List<Exercise>.from(workout.exercises);
@@ -321,7 +349,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                       onTap: () => _showEditExerciseDialog(index, exercise),
                       trailing: IconButton(
                         icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => deleteExercise(index),
+                        onPressed: () => _confirmDeleteExercise(index),
                       ),
                     ),
                   );
