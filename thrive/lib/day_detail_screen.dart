@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
-import 'models/workout.dart';
-import 'screens/add_exercise_screen.dart';
-import 'screens/view_exercises_screen.dart';
 import 'screens/nutrition_screen.dart';
 import 'screens/workouts_screen.dart';
+import 'screens/sleep_entry_screen.dart';
+import 'screens/mood_entry_screen.dart';
+import 'screens/daily_notes_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 
@@ -27,6 +27,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   String dietNotes = '';
   List<Exercise> exercises = [];
   String workoutNotes = '';
+  String dailyNotes = '';
 
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         dietNotes = storedHabit.dietNotes;
         exercises = storedHabit.exercises;
         workoutNotes = storedHabit.workoutNotes;
+        dailyNotes = storedHabit.dailyNotes;
       });
     }
   }
@@ -59,14 +61,34 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       exercises: exercises,
       foods: habit?.foods ?? [],
       workouts: habit?.workouts ?? [],
-      workoutNotes: workoutNotes
+      workoutNotes: workoutNotes,
+      dailyNotes: dailyNotes,
     );
     habitBox.put(key, newHabit);
     habit = newHabit;
   }
 
-  int get totalExerciseMinutes {
-    return exercises.fold(0, (sum, exercise) => sum + exercise.minutes);
+  Widget _buildCategoryButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: Icon(icon, size: 28),
+        label: Text(label, style: TextStyle(fontSize: 18)),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: color.withOpacity(0.9),
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.symmetric(vertical: 18),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          elevation: 4,
+        ),
+        onPressed: onPressed,
+      ),
+    );
   }
 
   @override
@@ -79,82 +101,47 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
-            Text('Sleep Hours: ${sleepHours.toStringAsFixed(1)}'),
-            Slider(
-              min: 0,
-              max: 12,
-              divisions: 24,
-              value: sleepHours,
-              onChanged: (val) {
-                setState(() {
-                  sleepHours = val;
-                });
-              },
-            ),
-            SizedBox(height: 16),
-
-            Text('Mood Rating: $moodRating'),
-            Slider(
-              min: 1,
-              max: 10,
-              divisions: 9,
-              value: moodRating.toDouble(),
-              onChanged: (val) {
-                setState(() {
-                  moodRating = val.toInt();
-                });
-              },
-            ),
-            SizedBox(height: 16),
-
-            Text('Total Exercise Minutes: $totalExerciseMinutes'),
-            SizedBox(height: 8),
-
-            ElevatedButton(
+            _buildCategoryButton(
+              icon: Icons.bedtime,
+              label: 'Sleep',
+              color: Colors.indigoAccent,
               onPressed: () async {
-                final newExercise = await Navigator.push(
+                final updatedSleep = await Navigator.push<double>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => AddExerciseScreen(
-                      onAdd: (exercise) {
-                        setState(() {
-                          exercises.add(exercise);
-                        });
-                      },
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => SleepEntryScreen(initialSleepHours: sleepHours)),
                 );
+                if (updatedSleep != null) {
+                  setState(() {
+                    sleepHours = updatedSleep;
+                  });
+                  saveHabit();
+                }
               },
-              child: Text('Add Exercise'),
             ),
 
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
+            SizedBox(height: 12),
+            _buildCategoryButton(
+              icon: Icons.sentiment_satisfied_alt,
+              label: 'Mood',
+              color: Colors.pinkAccent,
+              onPressed: () async {
+                final updatedMood = await Navigator.push<int>(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => ViewExercisesScreen(
-                      exercises: exercises,
-                      onUpdate: (updatedExercises) {
-                        setState(() {
-                          exercises = updatedExercises;
-                        });
-                      },
-                    ),
-                  ),
+                  MaterialPageRoute(builder: (context) => MoodEntryScreen(initialMoodRating: moodRating)),
                 );
+                if (updatedMood != null) {
+                  setState(() {
+                    moodRating = updatedMood;
+                  });
+                  saveHabit();
+                }
               },
-              child: Text('View Exercises'),
             ),
-
-            SizedBox(height: 16),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
-                foregroundColor: Colors.white,
-                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+            SizedBox(height: 12),
+            _buildCategoryButton(
+              icon: Icons.fitness_center,
+              label: 'Workouts',
+              color: Colors.blueAccent,
               onPressed: () async {
                 final updatedHabit = await Navigator.push<Habit>(
                   context,
@@ -165,11 +152,11 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       dietNotes: dietNotes,
                       exercises: exercises,
                       foods: [],
-                      workoutNotes: workoutNotes
+                      workoutNotes: workoutNotes,
+                      dailyNotes: dailyNotes
                     )),
                   ),
                 );
-
                 if (updatedHabit != null) {
                   setState(() {
                     habit = updatedHabit;
@@ -178,15 +165,12 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                   saveHabit();
                 }
               },
-              child: Text('Workouts'),
             ),
-
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green.shade400,
-                foregroundColor: Colors.white,
-                textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+            SizedBox(height: 12),
+            _buildCategoryButton(
+              icon: Icons.restaurant,
+              label: 'Nutrition',
+              color: Colors.green,
               onPressed: () async {
                 final updatedHabit = await Navigator.push<Habit>(
                   context,
@@ -197,11 +181,11 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       dietNotes: dietNotes,
                       exercises: exercises,
                       foods: [],
-                      workoutNotes: workoutNotes
+                      workoutNotes: workoutNotes,
+                      dailyNotes: dailyNotes
                     )),
                   ),
                 );
-
                 if (updatedHabit != null) {
                   setState(() {
                     habit = updatedHabit;
@@ -210,17 +194,24 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                   saveHabit();
                 }
               },
-              child: Text('Nutrition'),
             ),
-
-            SizedBox(height: 20),
-
-            ElevatedButton(
-              onPressed: () {
-                saveHabit();
-                Navigator.pop(context);
+            SizedBox(height: 12),
+            _buildCategoryButton(
+              icon: Icons.note_alt,
+              label: 'Daily Notes',
+              color: Colors.orange,
+              onPressed: () async {
+                final updatedNotes = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(builder: (context) => DailyNotesScreen(initialNotes: dailyNotes)),
+                );
+                if (updatedNotes != null) {
+                  setState(() {
+                    dailyNotes = updatedNotes;
+                  });
+                  saveHabit();
+                }
               },
-              child: Text('Save Day'),
             ),
           ],
         ),

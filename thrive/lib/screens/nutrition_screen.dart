@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/food.dart';
 import '../models/habit.dart';
 import '../screens/food_templates_screen.dart';
+import 'package:hive/hive.dart';
 
 class NutritionScreen extends StatefulWidget {
   final Habit habit;
@@ -95,14 +96,14 @@ class _NutritionScreenState extends State<NutritionScreen> {
               SizedBox(height: 16),
               _buildFoodsList(),
               SizedBox(height: 20),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: _showFoodOptions,
-                child: Text('Add Food'),
-              ),
+              // ElevatedButton(
+              //   style: ElevatedButton.styleFrom(
+              //     backgroundColor: Colors.green,
+              //     foregroundColor: Colors.white,
+              //   ),
+              //   onPressed: _showFoodOptions,
+              //   child: Text('Add Food'),
+              // ),
             ],
           ),
         ),
@@ -112,23 +113,61 @@ class _NutritionScreenState extends State<NutritionScreen> {
 
   Widget _buildTotalsCard() {
     return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Daily Totals', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            SizedBox(height: 8),
-            _buildNutrientRow('Calories', totalCalories.toStringAsFixed(1)),
-            _buildNutrientRow('Protein (g)', totalProtein.toStringAsFixed(1)),
-            _buildNutrientRow('Carbs (g)', totalCarbs.toStringAsFixed(1)),
-            _buildNutrientRow('Fats (g)', totalFats.toStringAsFixed(1)),
-            _buildNutrientRow('Added Sugar (g)', totalSugar.toStringAsFixed(1)),
+            Text(
+              'Daily Totals',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            SizedBox(height: 16),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                _buildTotalTile('Calories', totalCalories.toStringAsFixed(0), Colors.orange),
+                _buildTotalTile('Protein (g)', totalProtein.toStringAsFixed(1), Colors.green),
+                _buildTotalTile('Carbs (g)', totalCarbs.toStringAsFixed(1), Colors.blue),
+                _buildTotalTile('Fats (g)', totalFats.toStringAsFixed(1), Colors.purple),
+                _buildTotalTile('Added Sugar (g)', totalSugar.toStringAsFixed(1), Colors.red),
+              ],
+            ),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildTotalTile(String label, String value, Color color) {
+    return Container(
+      width: 140, // <-- Fixed width for consistency
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: color, fontWeight: FontWeight.bold),
+          ),
+          SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 
   Widget _buildDietNotesCard() {
     return Card(
@@ -159,6 +198,20 @@ class _NutritionScreenState extends State<NutritionScreen> {
       children: [
         Text('Foods', style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
         SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton(
+            onPressed: _showFoodOptions,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.green,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+            child: Text('Add Food', style: TextStyle(fontSize: 16)),
+          ),
+        ),
+        SizedBox(height: 12),
         habit.foods.isEmpty
             ? Text('No foods added yet.', style: TextStyle(color: Colors.grey))
             : ListView.builder(
@@ -287,38 +340,177 @@ class _NutritionScreenState extends State<NutritionScreen> {
     }
   }
 
-  void _showFoodOptions() async {
-    final pickedOption = await showDialog<String>(
+  void _showFoodOptions() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add Food'),
-        content: Text('Choose how you want to add food:'),
-        actions: [
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, 'manual'),
-            child: Text('Manual Entry'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, 'template'),
-            child: Text('Pick from Template'),
-          ),
-        ],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 6,
+              width: 60,
+              margin: EdgeInsets.only(top: 12, bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.create),
+              title: Text('Create New Food'),
+              onTap: () async {
+                Navigator.pop(context); // close bottom sheet
+                final newFood = await _showAddFoodDialog();
+                if (newFood != null) addFood(newFood);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.library_books),
+              title: Text('Pick from Templates'),
+              onTap: () async {
+                Navigator.pop(context); // close bottom sheet
+                final selectedFood = await _showPickTemplateDialog();
+                if (selectedFood != null) addFood(selectedFood);
+              },
+            ),
+          ],
+        ),
       ),
     );
-
-    if (pickedOption == 'manual') {
-      final newFood = await _showAddFoodDialog();
-      if (newFood != null) addFood(newFood);
-    } else if (pickedOption == 'template') {
-      final selectedFood = await Navigator.push<Food>(
-        context,
-        MaterialPageRoute(builder: (context) => FoodTemplatesScreen()),
-      );
-      if (selectedFood != null) addFood(selectedFood);
-    }
   }
 
-  Future<Food?> _showAddFoodDialog() async {
+
+  Future<Food?> _showPickTemplateDialog() async {
+    final templatesBox = Hive.box<Food>('food_templates');
+    List<Food> templates = templatesBox.values.toList();
+    List<Food> filteredTemplates = List.from(templates);
+    TextEditingController _searchController = TextEditingController();
+
+    if (templates.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('No templates available')),
+      );
+      return null;
+    }
+
+    return await showModalBottomSheet<Food>(
+      context: context,
+      isScrollControlled: true, // allows the sheet to be tall
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom,
+                left: 16,
+                right: 16,
+                top: 16,
+              ),
+              child: SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      height: 6,
+                      width: 60,
+                      margin: EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(3),
+                      ),
+                    ),
+                    TextField(
+                      controller: _searchController,
+                      decoration: InputDecoration(
+                        hintText: 'Search foods...',
+                        prefixIcon: Icon(Icons.search),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                      ),
+                      onChanged: (query) {
+                        setState(() {
+                          filteredTemplates = templates.where((food) {
+                            return food.name.toLowerCase().contains(query.toLowerCase());
+                          }).toList();
+                        });
+                      },
+                    ),
+                    SizedBox(height: 12),
+                    Expanded(
+                      child: filteredTemplates.isEmpty
+                          ? Center(child: Text('No results found.'))
+                          : ListView.separated(
+                        shrinkWrap: true,
+                        itemCount: filteredTemplates.length,
+                        separatorBuilder: (context, index) => SizedBox(height: 8),
+                        itemBuilder: (context, index) {
+                          final food = filteredTemplates[index];
+                          return Card(
+                            color: Colors.green[50],
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            child: ListTile(
+                              leading: Icon(Icons.restaurant_menu, color: Colors.green),
+                              title: Text(food.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                              subtitle: Text(
+                                '${food.calories} cal • ${food.protein}g P • ${food.carbs}g C • ${food.fats}g F',
+                                style: TextStyle(fontSize: 12),
+                              ),
+                              onTap: () => Navigator.pop(context, food),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: Text('Cancel'),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final newFood = await _showCreateTemplateDialog();
+                              if (newFood != null) {
+                                await templatesBox.add(newFood);
+                                templates = templatesBox.values.toList();
+                                _searchController.clear();
+                                setState(() {
+                                  filteredTemplates = List.from(templates);
+                                });
+                              }
+                            },
+                            child: Text('New Template'),
+                          ),
+                        ),
+                      ],
+                    ),
+                    SizedBox(height: 12),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+
+
+  Future<Food?> _showCreateTemplateDialog() async {
     String name = '';
     double calories = 0;
     double protein = 0;
@@ -330,7 +522,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add Food Manually'),
+          title: Text('Create New Template'),
           content: SingleChildScrollView(
             child: Column(
               children: [
@@ -367,10 +559,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
             ElevatedButton(
               onPressed: () {
                 if (name.isNotEmpty && calories > 0) {
@@ -394,4 +583,98 @@ class _NutritionScreenState extends State<NutritionScreen> {
       },
     );
   }
+
+
+
+  Future<Food?> _showAddFoodDialog() async {
+    String name = '';
+    double calories = 0;
+    double protein = 0;
+    double carbs = 0;
+    double fats = 0;
+    double addedSugar = 0;
+
+    return await showDialog<Food>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add Food Manually', style: TextStyle(fontWeight: FontWeight.bold)),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                TextField(
+                  decoration: InputDecoration(
+                    labelText: 'Food Name',
+                    hintText: 'e.g. Chicken Breast',
+                    border: OutlineInputBorder(),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  ),
+                  onChanged: (val) => name = val,
+                ),
+                SizedBox(height: 20),
+                Text('Macros', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                SizedBox(height: 10),
+                _buildNumberInputField('Calories', (val) => calories = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Protein (g)', (val) => protein = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Carbs (g)', (val) => carbs = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Fats (g)', (val) => fats = double.tryParse(val) ?? 0),
+                SizedBox(height: 8),
+                _buildNumberInputField('Added Sugar (g)', (val) => addedSugar = double.tryParse(val) ?? 0),
+              ],
+            ),
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Cancel'),
+                  ),
+                ),
+                SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      if (name.isNotEmpty && calories > 0) {
+                        Navigator.pop(
+                          context,
+                          Food(
+                            name: name,
+                            calories: calories,
+                            protein: protein,
+                            carbs: carbs,
+                            fats: fats,
+                            addedSugar: addedSugar,
+                          ),
+                        );
+                      }
+                    },
+                    child: Text('Save'),
+                  ),
+                ),
+              ],
+            )
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _buildNumberInputField(String label, Function(String) onChanged) {
+    return TextField(
+      decoration: InputDecoration(
+        labelText: label,
+        border: OutlineInputBorder(),
+        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      ),
+      keyboardType: TextInputType.number,
+      onChanged: onChanged,
+    );
+  }
+
 }
