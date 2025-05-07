@@ -153,8 +153,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.black,
-                  backgroundColor: Colors.lightBlueAccent,
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.blue,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

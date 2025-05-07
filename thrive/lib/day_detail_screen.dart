@@ -107,48 +107,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             ),
             SizedBox(height: 16),
 
-            Text('Total Exercise Minutes: $totalExerciseMinutes'),
-            SizedBox(height: 8),
-
-            ElevatedButton(
-              onPressed: () async {
-                final newExercise = await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddExerciseScreen(
-                      onAdd: (exercise) {
-                        setState(() {
-                          exercises.add(exercise);
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-              child: Text('Add Exercise'),
-            ),
-
-            ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ViewExercisesScreen(
-                      exercises: exercises,
-                      onUpdate: (updatedExercises) {
-                        setState(() {
-                          exercises = updatedExercises;
-                        });
-                      },
-                    ),
-                  ),
-                );
-              },
-              child: Text('View Exercises'),
-            ),
-
-            SizedBox(height: 16),
-
             ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue,
@@ -179,7 +137,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 }
               },
               child: Text('Workouts'),
-            ),
+            ), //Workout Button
 
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -211,7 +169,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 }
               },
               child: Text('Nutrition'),
-            ),
+            ), //Nutrition Button
 
             SizedBox(height: 20),
 

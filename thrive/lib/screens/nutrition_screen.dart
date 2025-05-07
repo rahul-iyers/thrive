@@ -340,33 +340,50 @@ class _NutritionScreenState extends State<NutritionScreen> {
     }
   }
 
-  void _showFoodOptions() async {
-    final pickedOption = await showDialog<String>(
+  void _showFoodOptions() {
+    showModalBottomSheet(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Add Food', style: TextStyle(fontWeight: FontWeight.bold)),
-        content: Text('Choose how you want to add food:'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, 'manual'),
-            child: Text('Manual Entry'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, 'template'),
-            child: Text('Pick from Template'),
-          ),
-        ],
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      backgroundColor: Colors.white,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              height: 6,
+              width: 60,
+              margin: EdgeInsets.only(top: 12, bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(3),
+              ),
+            ),
+            ListTile(
+              leading: Icon(Icons.create),
+              title: Text('Create New Food'),
+              onTap: () async {
+                Navigator.pop(context); // close bottom sheet
+                final newFood = await _showAddFoodDialog();
+                if (newFood != null) addFood(newFood);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.library_books),
+              title: Text('Pick from Templates'),
+              onTap: () async {
+                Navigator.pop(context); // close bottom sheet
+                final selectedFood = await _showPickTemplateDialog();
+                if (selectedFood != null) addFood(selectedFood);
+              },
+            ),
+          ],
+        ),
       ),
     );
-
-    if (pickedOption == 'manual') {
-      final newFood = await _showAddFoodDialog();
-      if (newFood != null) addFood(newFood);
-    } else if (pickedOption == 'template') {
-      final selectedFood = await _showPickTemplateDialog();
-      if (selectedFood != null) addFood(selectedFood);
-    }
   }
+
 
   Future<Food?> _showPickTemplateDialog() async {
     final templatesBox = Hive.box<Food>('food_templates');
