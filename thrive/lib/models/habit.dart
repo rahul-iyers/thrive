@@ -31,6 +31,12 @@ class Habit extends HiveObject {
   @HiveField(7)
   String dailyNotes;
 
+  @HiveField(8)
+  int sleepQuality;
+
+  @HiveField(9)
+  String sleepNotes;
+
   Habit({
     required this.sleepHours,
     required this.moodRating,
@@ -39,6 +45,8 @@ class Habit extends HiveObject {
     this.foods = const [],
     required this.workoutNotes,
     this.workouts = const[],
-    required this.dailyNotes
+    required this.dailyNotes,
+    this.sleepQuality = 3,   // default medium quality
+    this.sleepNotes = '',
   });
 }
