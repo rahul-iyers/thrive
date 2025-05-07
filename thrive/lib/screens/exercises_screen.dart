@@ -32,6 +32,58 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     await workout.save();
   }
 
+  Future<Exercise?> _showCreateTemplateDialog() async {
+    String name = '';
+    int minutes = 0;
+    int sets = 0;
+    String reps = '';
+    String weight = '';
+    String notes = '';
+    String type = 'Gym';
+
+    return await showDialog<Exercise>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Create New Exercise Template'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildTextField('Name', onChanged: (v) => name = v),
+                _buildNumberField('Minutes', onChanged: (v) => minutes = int.tryParse(v) ?? 0),
+                _buildNumberField('Sets', onChanged: (v) => sets = int.tryParse(v) ?? 0),
+                _buildTextField('Reps', onChanged: (v) => reps = v),
+                _buildTextField('Weight', onChanged: (v) => weight = v),
+                _buildTextField('Notes', onChanged: (v) => notes = v),
+                _buildTextField('Type', onChanged: (v) => type = v),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
+            ElevatedButton(
+              onPressed: () {
+                if (name.isNotEmpty) {
+                  Navigator.pop(context, Exercise(
+                    name: name,
+                    minutes: minutes,
+                    sets: sets,
+                    reps: reps,
+                    weight: weight,
+                    notes: notes,
+                    type: type,
+                  ));
+                }
+              },
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   void _deleteExercise(int index) async {
     final updatedExercises = List<Exercise>.from(workout.exercises);
     updatedExercises.removeAt(index);
@@ -273,8 +325,30 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                             child: Text('Cancel'),
                           ),
                         ),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: ElevatedButton(
+                            onPressed: () async {
+                              final newExercise = await _showCreateTemplateDialog();
+                              if (newExercise != null) {
+                                final templatesBox = Hive.box<Exercise>('exercise_templates');
+                                await templatesBox.add(newExercise);
+                                // Refresh templates
+                                templatesBox.flush(); // ensure latest state
+                                templatesBox.compact(); // (optional) save space
+                                final updatedTemplates = templatesBox.values.toList();
+                                setState(() {
+                                  templates = updatedTemplates;
+                                  filteredTemplates = updatedTemplates;
+                                });
+                              }
+                            },
+                            child: Text('New Template'),
+                          ),
+                        ),
                       ],
                     ),
+
                     SizedBox(height: 12),
                   ],
                 ),
