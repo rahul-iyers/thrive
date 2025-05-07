@@ -184,10 +184,39 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               itemCount: templates.length,
               itemBuilder: (context, index) {
                 final exercise = templates[index];
-                return ListTile(
-                  title: Text(exercise.name),
-                  subtitle: Text('${exercise.sets} sets • ${exercise.reps} reps'),
-                  onTap: () => Navigator.pop(context, exercise),
+                return Card(
+                  color: Colors.blue[50],
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 3,
+                  margin: EdgeInsets.symmetric(vertical: 6),
+                  child: ListTile(
+                    contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    title: Text(
+                      exercise.name,
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (exercise.sets > 0 || exercise.reps.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text('${exercise.sets} sets × ${exercise.reps} reps'),
+                          ),
+                        if (exercise.weight.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text('Weight: ${exercise.weight}', style: TextStyle(fontSize: 13, color: Colors.grey[700])),
+                          ),
+                        if (exercise.notes.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(exercise.notes, style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13)),
+                          ),
+                      ],
+                    ),
+                    onTap: () => Navigator.pop(context, exercise),
+                  ),
                 );
               },
             ),
@@ -195,6 +224,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         );
       },
     );
+
 
     if (selectedExercise != null) {
       final confirm = await _showTemplatePreviewDialog(selectedExercise);
