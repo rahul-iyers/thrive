@@ -27,6 +27,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   String dietNotes = '';
   List<Exercise> exercises = [];
   String workoutNotes = '';
+  String dailyNotes = '';
 
   @override
   void initState() {
@@ -46,6 +47,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         dietNotes = storedHabit.dietNotes;
         exercises = storedHabit.exercises;
         workoutNotes = storedHabit.workoutNotes;
+        dailyNotes = storedHabit.dailyNotes;
       });
     }
   }
@@ -60,6 +62,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       foods: habit?.foods ?? [],
       workouts: habit?.workouts ?? [],
       workoutNotes: workoutNotes,
+      dailyNotes: dailyNotes,
     );
     habitBox.put(key, newHabit);
     habit = newHabit;
@@ -150,6 +153,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       exercises: exercises,
                       foods: [],
                       workoutNotes: workoutNotes,
+                      dailyNotes: dailyNotes
                     )),
                   ),
                 );
@@ -178,6 +182,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                       exercises: exercises,
                       foods: [],
                       workoutNotes: workoutNotes,
+                      dailyNotes: dailyNotes
                     )),
                   ),
                 );
@@ -195,7 +200,18 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               icon: Icons.note_alt,
               label: 'Daily Notes',
               color: Colors.orange,
-              onPressed: () {}, // TODO: Open Daily Notes Screen
+              onPressed: () async {
+                final updatedNotes = await Navigator.push<String>(
+                  context,
+                  MaterialPageRoute(builder: (context) => DailyNotesScreen(initialNotes: dailyNotes)),
+                );
+                if (updatedNotes != null) {
+                  setState(() {
+                    dailyNotes = updatedNotes;
+                  });
+                  saveHabit();
+                }
+              },
             ),
           ],
         ),

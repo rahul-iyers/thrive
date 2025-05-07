@@ -28,6 +28,9 @@ class Habit extends HiveObject {
   @HiveField(6)
   List<Workout> workouts;
 
+  @HiveField(7)
+  String dailyNotes;
+
   Habit({
     required this.sleepHours,
     required this.moodRating,
@@ -35,6 +38,7 @@ class Habit extends HiveObject {
     required this.exercises,
     this.foods = const [],
     required this.workoutNotes,
-    this.workouts = const[]
+    this.workouts = const[],
+    required this.dailyNotes
   });
 }
