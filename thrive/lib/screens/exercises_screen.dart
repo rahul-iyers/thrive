@@ -44,31 +44,26 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
   }
 
 
-  void _confirmDeleteExercise(int index) {
-    showDialog(
+  Future<bool?> _confirmDeleteExercise(int index) {
+    return showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Delete Exercise?'),
-        content: Text('Are you sure you want to delete this exercise?'),
+        content: Text('Are you sure you want to delete "${workout.exercises[index].name}"?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), // Cancel
+            onPressed: () => Navigator.pop(context, false),
             child: Text('Cancel'),
           ),
-          TextButton(
-            onPressed: () {
-              _deleteExercise(index); // ✅ Actually delete the exercise
-              Navigator.pop(context); // ✅ Then close the dialog
-            },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
-            ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Delete'),
           ),
         ],
       ),
     );
   }
+
 
 
   Future<void> editExercise(int index, Exercise exercise) async {
@@ -323,6 +318,90 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       ),
     );
   }
+  Widget _buildExerciseCard(Exercise exercise, int index) {
+    return Dismissible(
+      key: ValueKey(exercise.hashCode), // instead of name+index
+      direction: DismissDirection.endToStart,
+      background: Container(
+        decoration: BoxDecoration(
+          color: Colors.redAccent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.centerRight,
+        padding: EdgeInsets.symmetric(horizontal: 20),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            Icon(Icons.delete, color: Colors.white),
+            SizedBox(width: 8),
+            Text(
+              'Delete',
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+
+      confirmDismiss: (_) => _confirmDeleteExercise(index),
+        onDismissed: (_) {
+          setState(() {
+            workout.exercises.removeAt(index);
+          });
+          workout.save();
+        },
+      child: Card(
+        color: Colors.yellow[50],
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        elevation: 3,
+        margin: EdgeInsets.symmetric(vertical: 6),
+        child: ListTile(
+          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  exercise.name,
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ),
+              if (exercise.minutes > 0) ...[
+                Icon(Icons.timer, size: 18, color: Colors.grey),
+                SizedBox(width: 4),
+                Text(
+                  '${exercise.minutes} min',
+                  style: TextStyle(fontSize: 14, color: Colors.grey[700]),
+                ),
+              ],
+            ],
+          ),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              if (exercise.sets > 0 || exercise.reps.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    '${exercise.sets} sets × ${exercise.reps} reps ${exercise.weight}',
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
+              if (exercise.notes.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: Text(
+                    exercise.notes,
+                    style: TextStyle(fontStyle: FontStyle.italic, fontSize: 13),
+                  ),
+                ),
+            ],
+          ),
+          onTap: () => _showEditExerciseDialog(index, exercise),
+        ),
+      ),
+    );
+  }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -332,37 +411,42 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: ListView(
           children: [
-            Expanded(
-              child: workout.exercises.isEmpty
-                  ? Center(child: Text('No exercises yet.'))
-                  : ListView.builder(
-                itemCount: workout.exercises.length,
-                itemBuilder: (context, index) {
-                  final exercise = workout.exercises[index];
-                  return Card(
-                    margin: EdgeInsets.symmetric(vertical: 6),
-                    child: ListTile(
-                      title: Text(exercise.name),
-                      subtitle: Text('${exercise.sets} sets • ${exercise.reps} reps'),
-                      onTap: () => _showEditExerciseDialog(index, exercise),
-                      trailing: IconButton(
-                        icon: Icon(Icons.delete, color: Colors.red),
-                        onPressed: () => _confirmDeleteExercise(index),
-                      ),
-                    ),
-                  );
-                },
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _showAddExerciseOptions,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.blueAccent,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(32)),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                ),
+                child: Text('Add Exercise', style: TextStyle(fontSize: 16)),
               ),
             ),
-            ElevatedButton(
-              onPressed: _showAddExerciseOptions,
-              child: Text('Add Exercise'),
+            SizedBox(height: 12),
+            workout.exercises.isEmpty
+                ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text('No exercises yet.', style: TextStyle(color: Colors.grey)),
+              ),
+            )
+                : ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: workout.exercises.length,
+              itemBuilder: (context, index) {
+                final exercise = workout.exercises[index];
+                return _buildExerciseCard(exercise, index);
+              },
             ),
           ],
         ),
       ),
+
     );
   }
 }
