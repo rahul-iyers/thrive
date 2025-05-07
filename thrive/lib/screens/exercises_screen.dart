@@ -21,25 +21,40 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     workout = widget.workout;
   }
 
-  void addExercise(Exercise exercise) {
+  Future<void> addExercise(Exercise exercise) async {
+    final updatedExercises = List<Exercise>.from(workout.exercises);
+    updatedExercises.add(exercise);
+
     setState(() {
-      workout.exercises.add(exercise);
+      workout.exercises = updatedExercises;
     });
+
+    await workout.save();
   }
 
-  void deleteExercise(int index) {
+  Future<void> deleteExercise(int index) async {
+    final updatedExercises = List<Exercise>.from(workout.exercises);
+    updatedExercises.removeAt(index);
+
     setState(() {
-      workout.exercises.removeAt(index);
+      workout.exercises = updatedExercises;
     });
+
+    await workout.save();
   }
 
-  void _editExercise(int index, Exercise exercise) {
+  Future<void> editExercise(int index, Exercise exercise) async {
+    final updatedExercises = List<Exercise>.from(workout.exercises);
+    updatedExercises[index] = exercise;
+
     setState(() {
-      workout.exercises[index] = exercise;
+      workout.exercises = updatedExercises;
     });
+
+    await workout.save();
   }
 
-  void _showAddExerciseDialog() {
+  void _showAddExerciseOptions() {
     showModalBottomSheet(
       context: context,
       builder: (context) => SafeArea(
@@ -51,7 +66,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               title: Text('Create New Exercise'),
               onTap: () {
                 Navigator.pop(context);
-                _showManualAddExerciseDialog();
+                _showManualAddDialog();
               },
             ),
             ListTile(
@@ -68,7 +83,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     );
   }
 
-  void _showManualAddExerciseDialog() {
+  void _showManualAddDialog() {
     String name = '';
     int minutes = 0;
     int sets = 0;
@@ -81,52 +96,26 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Add New Exercise'),
+          title: Text('Create New Exercise'),
           content: SingleChildScrollView(
             child: Column(
               children: [
-                TextField(
-                  decoration: InputDecoration(labelText: 'Exercise Name'),
-                  onChanged: (val) => name = val,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Minutes'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => minutes = int.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Sets'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => sets = int.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Reps'),
-                  onChanged: (val) => reps = val,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Weight'),
-                  onChanged: (val) => weight = val,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Notes'),
-                  onChanged: (val) => notes = val,
-                ),
-                TextField(
-                  decoration: InputDecoration(labelText: 'Type (Gym, Sport, Cardio)'),
-                  onChanged: (val) => type = val,
-                ),
+                _buildTextField('Name', onChanged: (v) => name = v),
+                _buildNumberField('Minutes', onChanged: (v) => minutes = int.tryParse(v) ?? 0),
+                _buildNumberField('Sets', onChanged: (v) => sets = int.tryParse(v) ?? 0),
+                _buildTextField('Reps', onChanged: (v) => reps = v),
+                _buildTextField('Weight', onChanged: (v) => weight = v),
+                _buildTextField('Notes', onChanged: (v) => notes = v),
+                _buildTextField('Type', onChanged: (v) => type = v),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
             ElevatedButton(
               onPressed: () {
                 if (name.isNotEmpty) {
-                  addExercise(Exercise(
+                  Navigator.pop(context, Exercise(
                     name: name,
                     minutes: minutes,
                     sets: sets,
@@ -135,7 +124,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                     notes: notes,
                     type: type,
                   ));
-                  Navigator.pop(context);
                 }
               },
               child: Text('Save'),
@@ -143,49 +131,12 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           ],
         );
       },
-    );
+    ).then((newExercise) {
+      if (newExercise != null) {
+        addExercise(newExercise);
+      }
+    });
   }
-
-  Future<bool> _showTemplatePreviewDialog(Exercise exercise) async {
-    return await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text('Add This Exercise?'),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('Name: ${exercise.name}', style: TextStyle(fontWeight: FontWeight.bold)),
-                SizedBox(height: 8),
-                Text('Minutes: ${exercise.minutes}'),
-                Text('Sets: ${exercise.sets}'),
-                Text('Reps: ${exercise.reps}'),
-                Text('Weight: ${exercise.weight}'),
-                Text('Type: ${exercise.type}'),
-                if (exercise.notes.isNotEmpty) ...[
-                  SizedBox(height: 8),
-                  Text('Notes:', style: TextStyle(fontWeight: FontWeight.bold)),
-                  Text(exercise.notes),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: Text('Add Exercise'),
-            ),
-          ],
-        );
-      },
-    ) ?? false;
-  }
-
 
   void _showPickTemplateDialog() async {
     final templatesBox = Hive.box<Exercise>('exercise_templates');
@@ -212,22 +163,8 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                 final exercise = templates[index];
                 return ListTile(
                   title: Text(exercise.name),
-                  subtitle: Text('${exercise.sets} sets, ${exercise.reps} reps'),
-                  onTap: () async {
-                    Navigator.pop(context);
-                    final confirmed = await _showTemplatePreviewDialog(exercise);
-                    if (confirmed) {
-                      addExercise(Exercise(
-                        name: exercise.name,
-                        minutes: exercise.minutes,
-                        sets: exercise.sets,
-                        reps: exercise.reps,
-                        weight: exercise.weight,
-                        notes: exercise.notes,
-                        type: exercise.type,
-                      ));
-                    }
-                  },
+                  subtitle: Text('${exercise.sets} sets • ${exercise.reps} reps'),
+                  onTap: () => Navigator.pop(context, exercise),
                 );
               },
             ),
@@ -235,8 +172,53 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
         );
       },
     );
+
+    if (selectedExercise != null) {
+      final confirm = await _showTemplatePreviewDialog(selectedExercise);
+      if (confirm) {
+        addExercise(
+          Exercise(
+            name: selectedExercise.name,
+            minutes: selectedExercise.minutes,
+            sets: selectedExercise.sets,
+            reps: selectedExercise.reps,
+            weight: selectedExercise.weight,
+            notes: selectedExercise.notes,
+            type: selectedExercise.type,
+          ),
+        );
+      }
+    }
   }
 
+  Future<bool> _showTemplatePreviewDialog(Exercise exercise) async {
+    return await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add This Exercise?'),
+          content: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Name: ${exercise.name}', style: TextStyle(fontWeight: FontWeight.bold)),
+                Text('Minutes: ${exercise.minutes}'),
+                Text('Sets: ${exercise.sets}'),
+                Text('Reps: ${exercise.reps}'),
+                Text('Weight: ${exercise.weight}'),
+                Text('Type: ${exercise.type}'),
+                if (exercise.notes.isNotEmpty) Text('Notes: ${exercise.notes}'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: Text('Cancel')),
+            ElevatedButton(onPressed: () => Navigator.pop(context, true), child: Text('Add')),
+          ],
+        );
+      },
+    ) ?? false;
+  }
 
   void _showEditExerciseDialog(int index, Exercise exercise) {
     String name = exercise.name;
@@ -255,54 +237,21 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           content: SingleChildScrollView(
             child: Column(
               children: [
-                TextField(
-                  controller: TextEditingController(text: name),
-                  decoration: InputDecoration(labelText: 'Exercise Name'),
-                  onChanged: (val) => name = val,
-                ),
-                TextField(
-                  controller: TextEditingController(text: minutes.toString()),
-                  decoration: InputDecoration(labelText: 'Minutes'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => minutes = int.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  controller: TextEditingController(text: sets.toString()),
-                  decoration: InputDecoration(labelText: 'Sets'),
-                  keyboardType: TextInputType.number,
-                  onChanged: (val) => sets = int.tryParse(val) ?? 0,
-                ),
-                TextField(
-                  controller: TextEditingController(text: reps),
-                  decoration: InputDecoration(labelText: 'Reps'),
-                  onChanged: (val) => reps = val,
-                ),
-                TextField(
-                  controller: TextEditingController(text: weight),
-                  decoration: InputDecoration(labelText: 'Weight'),
-                  onChanged: (val) => weight = val,
-                ),
-                TextField(
-                  controller: TextEditingController(text: notes),
-                  decoration: InputDecoration(labelText: 'Notes'),
-                  onChanged: (val) => notes = val,
-                ),
-                TextField(
-                  controller: TextEditingController(text: type),
-                  decoration: InputDecoration(labelText: 'Type'),
-                  onChanged: (val) => type = val,
-                ),
+                _buildTextField('Name', initialValue: name, onChanged: (v) => name = v),
+                _buildNumberField('Minutes', initialValue: minutes.toString(), onChanged: (v) => minutes = int.tryParse(v) ?? 0),
+                _buildNumberField('Sets', initialValue: sets.toString(), onChanged: (v) => sets = int.tryParse(v) ?? 0),
+                _buildTextField('Reps', initialValue: reps, onChanged: (v) => reps = v),
+                _buildTextField('Weight', initialValue: weight, onChanged: (v) => weight = v),
+                _buildTextField('Notes', initialValue: notes, onChanged: (v) => notes = v),
+                _buildTextField('Type', initialValue: type, onChanged: (v) => type = v),
               ],
             ),
           ),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel'),
-            ),
+            TextButton(onPressed: () => Navigator.pop(context), child: Text('Cancel')),
             ElevatedButton(
               onPressed: () {
-                _editExercise(index, Exercise(
+                Navigator.pop(context, Exercise(
                   name: name,
                   minutes: minutes,
                   sets: sets,
@@ -311,13 +260,39 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                   notes: notes,
                   type: type,
                 ));
-                Navigator.pop(context);
               },
               child: Text('Save'),
             ),
           ],
         );
       },
+    ).then((editedExercise) {
+      if (editedExercise != null) {
+        editExercise(index, editedExercise);
+      }
+    });
+  }
+
+  Widget _buildTextField(String label, {String? initialValue, required Function(String) onChanged}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextField(
+        controller: initialValue != null ? TextEditingController(text: initialValue) : null,
+        decoration: InputDecoration(labelText: label),
+        onChanged: onChanged,
+      ),
+    );
+  }
+
+  Widget _buildNumberField(String label, {String? initialValue, required Function(String) onChanged}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: TextField(
+        controller: initialValue != null ? TextEditingController(text: initialValue) : null,
+        decoration: InputDecoration(labelText: label),
+        keyboardType: TextInputType.number,
+        onChanged: onChanged,
+      ),
     );
   }
 
@@ -354,7 +329,7 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
               ),
             ),
             ElevatedButton(
-              onPressed: _showAddExerciseDialog,
+              onPressed: _showAddExerciseOptions,
               child: Text('Add Exercise'),
             ),
           ],
