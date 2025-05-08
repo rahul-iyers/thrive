@@ -173,6 +173,8 @@ Future<void> saveTemplatesToFirestore(BuildContext context) async {
     final exercises = exerciseBox.values.map((e) => e.toMap()).toList();
     final foods = foodBox.values.map((f) => f.toMap()).toList();
 
+    print('Saving ${exercises.length} exercises and ${foods.length} foods');
+
     await firestore
         .collection('users')
         .doc(userId)
@@ -200,6 +202,7 @@ Future<void> loadTemplatesFromFirestore(BuildContext context) async {
     return;
   }
 
+  templatesLoaded = true;
   print('Loading templates from Firestore...');
 
   final user = FirebaseAuth.instance.currentUser;
@@ -268,7 +271,6 @@ Future<void> loadTemplatesFromFirestore(BuildContext context) async {
         }
 
         print('Finished loading templates.');
-        templatesLoaded = true;
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Templates loaded from cloud!')),

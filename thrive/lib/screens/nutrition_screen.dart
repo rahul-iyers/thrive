@@ -3,6 +3,7 @@ import '../models/food.dart';
 import '../models/habit.dart';
 import '../screens/food_templates_screen.dart';
 import 'package:hive/hive.dart';
+import '../services/firestore_service.dart';
 
 class NutritionScreen extends StatefulWidget {
   final Habit habit;
@@ -490,6 +491,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                                 setState(() {
                                   filteredTemplates = List.from(templates);
                                 });
+                                await saveTemplatesToFirestore(context); // <-- ADD THIS
                               }
                             },
                             child: Text('New Template'),
