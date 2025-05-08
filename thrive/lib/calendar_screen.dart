@@ -41,12 +41,15 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final days = _generateDays(_focusedMonth);
 
     return Scaffold(
-      backgroundColor: Color(0xFFfef4cc),
+      backgroundColor: Color(0xff4e4d4a),
       appBar: AppBar(
-        title: Text('Thrive Calendar'),
+        title: Text(
+            'Thrive',
+            style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)
+        ),
         centerTitle: true,
-        backgroundColor: Color(0xFFfef4cc),
-        foregroundColor: Colors.black,
+        backgroundColor: Color(0xff4e4d4a),
+        foregroundColor: Colors.yellow,
         elevation: 0,
         actions: [
           IconButton(
@@ -106,7 +109,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       duration: Duration(milliseconds: 150),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: isToday ? Color(0xFF81C784) : Colors.transparent,
+                          color: isToday ? Colors.yellow : Color(0xff232222),
                           shape: BoxShape.circle,
                         ),
                         alignment: Alignment.center,
@@ -114,12 +117,12 @@ class _CalendarScreenState extends State<CalendarScreen> {
                           '${day.day}',
                           style: TextStyle(
                             fontSize: 16,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.w800,
                             color: isToday
-                                ? Colors.white
+                                ? Color(0xff232222)
                                 : (day.month == _focusedMonth.month
-                                ? Colors.black.withOpacity(0.7)
-                                : Colors.grey[400]),
+                                ? Colors.white
+                                : Colors.grey[600]),
                           ),
                         ),
                       ),
@@ -193,7 +196,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left, size: 32),
+            icon: Icon(Icons.chevron_left, size: 32, color:Colors.yellow),
             onPressed: () {
               setState(() {
                 _focusedMonth = DateTime(
@@ -206,13 +209,14 @@ class _CalendarScreenState extends State<CalendarScreen> {
           Text(
             DateFormat.yMMMM().format(_focusedMonth),
             style: TextStyle(
-              fontSize: 26,
+              fontSize: 32,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
+              color: Colors.yellow
             ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right, size: 32),
+            icon: Icon(Icons.chevron_right, size: 32, color:Colors.yellow),
             onPressed: () {
               setState(() {
                 _focusedMonth = DateTime(
@@ -243,7 +247,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
-                  color: Colors.grey[600],
+                  color: Colors.white,
                 ),
               ),
             ),
