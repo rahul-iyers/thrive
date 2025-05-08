@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'day_detail_screen.dart';
 import 'models/habit.dart';
 import 'screens/exercise_templates_screen.dart';
+import 'screens/food_templates_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/login_screen.dart';
 import 'services/global_context_service.dart';
@@ -151,6 +152,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
                   );
                 },
                 child: Text('Your Exercises'),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.green,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => FoodTemplatesScreen(),
+                    ),
+                  );
+                },
+                child: Text('Your Foods'),
               ),
             ),
           ),

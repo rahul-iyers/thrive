@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/exercise.dart';
-import 'add_exercise_screen.dart';
+import '../widgets/add_exercise_dialog.dart';
 import '../services/firestore_service.dart';
 
 class ExerciseTemplatesScreen extends StatefulWidget {
@@ -20,19 +20,16 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
   }
 
   void addTemplate() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddExerciseScreen(
-          onAdd: (newExercise) {
-            templatesBox.add(newExercise);
-            setState(() {});
-            saveTemplatesToFirestore(context);
-          },
-          showPickTemplateButton: false,
-        ),
-      ),
+    final newExercise = await showDialog<Exercise>(
+      context: context,
+      builder: (context) => AddExerciseDialog(),
     );
+
+    if (newExercise != null) {
+      await templatesBox.add(newExercise);
+      setState(() {});
+      await saveTemplatesToFirestore(context);
+    }
   }
 
   void editTemplate(int index, Exercise oldExercise) async {
@@ -42,19 +39,16 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
 
     await Future.delayed(Duration(milliseconds: 150));
 
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddExerciseScreen(
-          onAdd: (updatedExercise) {
-            templatesBox.putAt(index, updatedExercise);
-            setState(() {});
-          },
-          exercise: oldExercise,
-          showPickTemplateButton: false,
-        ),
-      ),
+    final updatedExercise = await showDialog<Exercise>(
+      context: context,
+      builder: (context) => AddExerciseDialog(existingExercise: oldExercise),
     );
+
+    if (updatedExercise != null) {
+      await templatesBox.putAt(index, updatedExercise);
+      setState(() {});
+      await saveTemplatesToFirestore(context);
+    }
 
     setState(() {
       tappedIndex = null;
@@ -69,14 +63,15 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
         content: Text('Are you sure you want to delete this exercise template?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context), // Cancel
+            onPressed: () => Navigator.pop(context),
             child: Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              templatesBox.deleteAt(index);
+            onPressed: () async {
+              await templatesBox.deleteAt(index);
               setState(() {});
-              Navigator.pop(context); // Close dialog
+              Navigator.pop(context);
+              await saveTemplatesToFirestore(context);
             },
             child: Text(
               'Delete',
@@ -94,7 +89,7 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Your Exercises Templates'),
+        title: Text('Your Exercise Templates'),
         actions: [
           IconButton(
             onPressed: addTemplate,
@@ -138,11 +133,9 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
                 ),
                 child: Stack(
                   children: [
-                    // The actual exercise content
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        // Name + X Button
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
@@ -163,13 +156,11 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
                           ],
                         ),
                         SizedBox(height: 6),
-                        // Sets, Reps, Weight
                         Text(
                           'Sets: ${exercise.sets}  Reps: ${exercise.reps}  Weight: ${exercise.weight}',
                           style: TextStyle(fontSize: 14),
                         ),
                         SizedBox(height: 4),
-                        // Type
                         Text(
                           'Type: ${exercise.type} | ${exercise.minutes} min',
                           style: TextStyle(
@@ -177,7 +168,6 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
                             color: Colors.grey[600],
                           ),
                         ),
-                        // Notes (optional)
                         if (exercise.notes.isNotEmpty)
                           Padding(
                             padding: const EdgeInsets.only(top: 4),
