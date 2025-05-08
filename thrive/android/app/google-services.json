@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "610556180362",
+    "project_id": "thrive-c29b6",
+    "storage_bucket": "thrive-c29b6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:610556180362:android:516bbf214db9f0d0c97a73",
+        "android_client_info": {
+          "package_name": "com.example.thrive"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCioYoOjOLdsdrxGwVatdQSk_a2hPuKB2Q"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

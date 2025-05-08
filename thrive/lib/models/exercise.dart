@@ -34,4 +34,16 @@ class Exercise extends HiveObject {
     this.notes = '',
     this.type = 'Gym',
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'minutes': minutes,
+      'sets': sets,
+      'reps': reps,
+      'weight': weight,
+      'notes': notes,
+      'type': type,
+    };
+  }
 }

@@ -22,4 +22,13 @@ class Workout extends HiveObject {
     this.minutes = 0,
     List<Exercise>? exercises,
   }) : exercises = exercises ?? [];
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'type': type,
+      'minutes': minutes,
+      'exercises': exercises.map((e) => e.toMap()).toList(),
+    };
+  }
 }

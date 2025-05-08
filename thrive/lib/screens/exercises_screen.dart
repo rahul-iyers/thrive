@@ -219,12 +219,12 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     List<Exercise> filteredTemplates = List.from(templates);
     TextEditingController _searchController = TextEditingController();
 
-    if (templates.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No templates available')),
-      );
-      return;
-    }
+    // if (templates.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('No templates available')),
+    //   );
+    //   return;
+    // }
 
     final selectedExercise = await showModalBottomSheet<Exercise>(
       context: context,

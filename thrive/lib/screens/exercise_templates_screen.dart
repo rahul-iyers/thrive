@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/exercise.dart';
 import 'add_exercise_screen.dart';
+import '../services/firestore_service.dart';
 
 class ExerciseTemplatesScreen extends StatefulWidget {
   @override
@@ -26,6 +27,7 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
           onAdd: (newExercise) {
             templatesBox.add(newExercise);
             setState(() {});
+            saveTemplatesToFirestore(context);
           },
           showPickTemplateButton: false,
         ),

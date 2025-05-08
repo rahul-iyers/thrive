@@ -4,7 +4,12 @@ import 'package:intl/intl.dart';
 import 'day_detail_screen.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
+import 'models/food.dart';
 import 'screens/exercise_templates_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'screens/login_screen.dart';
+import 'services/global_context_service.dart';
+import 'services/firestore_service.dart';
 
 class CalendarScreen extends StatefulWidget {
   @override
@@ -13,13 +18,23 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedMonth = DateTime.now();
-  late Box<Habit> habitBox;
+  Box<Habit>? habitBox;
   DateTime? _tappedDay;
+  bool _hasLoadedTemplates = false;
 
   @override
   void initState() {
     super.initState();
     habitBox = Hive.box<Habit>('habits');
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      if (!_hasLoadedTemplates) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          _hasLoadedTemplates = true;  // ✅ only load once
+          await loadTemplatesFromFirestore(GlobalContextService.globalContext);
+        }
+      }
+    });
   }
 
   @override
@@ -30,7 +45,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
       appBar: AppBar(
         title: Text('Thrive Calendar'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+                    (route) => false,
+              );
+            },
+          ),
+        ],
       ),
+
       body: Column(
         children: [
           _buildMonthHeader(),
@@ -266,8 +295,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   String _getDotColor(DateTime day) {
+    if (habitBox == null) return 'none'; // <-- defensive check
+
     final key = DateFormat('yyyy-MM-dd').format(day);
-    final habit = habitBox.get(key);
+    final habit = habitBox!.get(key);
 
     if (habit != null) {
       if (habit.exercises.isNotEmpty ||

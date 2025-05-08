@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../models/food.dart';
 import '../widgets/add_food_dialog.dart';
+import '../services/firestore_service.dart';
 
 class FoodTemplatesScreen extends StatefulWidget {
   @override
@@ -40,6 +41,7 @@ class _FoodTemplatesScreenState extends State<FoodTemplatesScreen>
     if (newFood != null) {
       templatesBox.add(newFood);
       setState(() {});
+      saveTemplatesToFirestore(context);
     }
   }
 
