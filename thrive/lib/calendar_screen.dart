@@ -3,8 +3,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import 'day_detail_screen.dart';
 import 'models/habit.dart';
-import 'models/exercise.dart';
-import 'models/food.dart';
 import 'screens/exercise_templates_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/login_screen.dart';
@@ -30,7 +28,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
       if (!_hasLoadedTemplates) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
-          _hasLoadedTemplates = true;  // ✅ only load once
+          _hasLoadedTemplates = true;
           await loadTemplatesFromFirestore(GlobalContextService.globalContext);
         }
       }
@@ -42,9 +40,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
     final days = _generateDays(_focusedMonth);
 
     return Scaffold(
+      backgroundColor: Color(0xFFfef4cc),
       appBar: AppBar(
         title: Text('Thrive Calendar'),
         centerTitle: true,
+        backgroundColor: Color(0xFFfef4cc),
+        foregroundColor: Colors.black,
+        elevation: 0,
         actions: [
           IconButton(
             icon: Icon(Icons.logout),
@@ -59,28 +61,25 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ],
       ),
-
       body: Column(
         children: [
           _buildMonthHeader(),
           _buildWeekDaysRow(),
-
           SizedBox(
             height: 500,
             child: AnimatedSwitcher(
               duration: Duration(milliseconds: 300),
               child: GridView.builder(
                 key: ValueKey<String>(_focusedMonth.toString()),
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(12),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 7,
-                  crossAxisSpacing: 6,
-                  mainAxisSpacing: 6,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
                 ),
                 itemCount: days.length,
                 itemBuilder: (context, index) {
                   final day = days[index];
-                  final dotColor = _getDotColor(day);
                   final isToday = _isSameDay(day, DateTime.now());
 
                   return GestureDetector(
@@ -106,65 +105,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
                       duration: Duration(milliseconds: 150),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: day.month == _focusedMonth.month
-                              ? Colors.white
-                              : Colors.grey.shade200,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            if (day.month == _focusedMonth.month)
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 4,
-                                offset: Offset(2, 2),
-                              ),
-                          ],
+                          color: isToday ? Color(0xFF81C784) : Colors.transparent,
+                          shape: BoxShape.circle,
                         ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            if (isToday)
-                              Container(
-                                width: 32,
-                                height: 32,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.lightBlueAccent,
-                                    width: 2,
-                                  ),
-                                ),
-                                alignment: Alignment.center,
-                                child: Text(
-                                  '${day.day}',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w600,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                              )
-                            else
-                              Text(
-                                '${day.day}',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: day.month == _focusedMonth.month
-                                      ? Colors.black
-                                      : Colors.grey,
-                                ),
-                              ),
-                            if (dotColor != 'none')
-                              Padding(
-                                padding: const EdgeInsets.only(top: 6),
-                                child: CircleAvatar(
-                                  radius: 4,
-                                  backgroundColor: dotColor == 'blue'
-                                      ? Colors.blue
-                                      : Colors.red,
-                                ),
-                              ),
-                          ],
+                        alignment: Alignment.center,
+                        child: Text(
+                          '${day.day}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: isToday
+                                ? Colors.white
+                                : (day.month == _focusedMonth.month
+                                ? Colors.black.withOpacity(0.7)
+                                : Colors.grey[400]),
+                          ),
                         ),
                       ),
                     ),
@@ -173,7 +128,6 @@ class _CalendarScreenState extends State<CalendarScreen> {
               ),
             ),
           ),
-
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
             child: SizedBox(
@@ -247,10 +201,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   Widget _buildWeekDaysRow() {
-    const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+    const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
+      padding: const EdgeInsets.symmetric(vertical: 8),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: weekDays
@@ -276,12 +230,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   List<DateTime> _generateDays(DateTime month) {
     final firstDayOfMonth = DateTime(month.year, month.month, 1);
     final daysBefore = firstDayOfMonth.weekday % 7;
-
     final firstToDisplay = firstDayOfMonth.subtract(Duration(days: daysBefore));
 
     final lastDayOfMonth = DateTime(month.year, month.month + 1, 0);
     final daysAfter = 6 - (lastDayOfMonth.weekday % 7);
-
     final lastToDisplay = lastDayOfMonth.add(Duration(days: daysAfter));
 
     final days = <DateTime>[];
@@ -290,30 +242,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
     day = day.add(Duration(days: 1))) {
       days.add(day);
     }
-
     return days;
-  }
-
-  String _getDotColor(DateTime day) {
-    if (habitBox == null) return 'none'; // <-- defensive check
-
-    final key = DateFormat('yyyy-MM-dd').format(day);
-    final habit = habitBox!.get(key);
-
-    if (habit != null) {
-      if (habit.exercises.isNotEmpty ||
-          habit.sleepHours > 0 ||
-          habit.moodRating > 0 ||
-          habit.dietNotes.isNotEmpty) {
-        return 'blue';
-      }
-    }
-
-    if (day.isBefore(DateTime.now())) {
-      return 'red';
-    }
-
-    return 'none';
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
