@@ -13,6 +13,7 @@ class _FoodTemplatesScreenState extends State<FoodTemplatesScreen>
     with SingleTickerProviderStateMixin {
   late Box<Food> templatesBox;
   late AnimationController _controller;
+  int? tappedIndex;
 
   @override
   void initState() {
@@ -40,15 +41,39 @@ class _FoodTemplatesScreenState extends State<FoodTemplatesScreen>
 
     if (newFood != null) {
       templatesBox.add(newFood);
+      await saveTemplatesToFirestore(context);
       setState(() {});
-      saveTemplatesToFirestore(context);
     }
+  }
+
+  void editTemplate(int index, Food oldFood) async {
+    setState(() {
+      tappedIndex = index;
+    });
+
+    await Future.delayed(Duration(milliseconds: 150));
+
+    final updatedFood = await showDialog<Food>(
+      context: context,
+      builder: (context) => AddFoodDialog(existingFood: oldFood),
+    );
+
+    if (updatedFood != null) {
+      templatesBox.putAt(index, updatedFood);
+      await saveTemplatesToFirestore(context);
+      setState(() {});
+    }
+
+    setState(() {
+      tappedIndex = null;
+    });
   }
 
   void deleteTemplate(int index) async {
     bool confirm = await _confirmDelete();
     if (confirm) {
       templatesBox.deleteAt(index);
+      await saveTemplatesToFirestore(context);
       setState(() {});
     }
   }
@@ -66,13 +91,12 @@ class _FoodTemplatesScreenState extends State<FoodTemplatesScreen>
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Delete'),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: Text('Delete'),
           ),
         ],
       ),
-    ) ??
-        false;
+    ) ?? false;
   }
 
   @override
@@ -102,24 +126,24 @@ class _FoodTemplatesScreenState extends State<FoodTemplatesScreen>
         itemCount: templates.length,
         itemBuilder: (context, index) {
           final food = templates[index];
-          return ScaleTransition(
-            scale: CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
-            child: Card(
-              elevation: 4,
-              margin: EdgeInsets.symmetric(vertical: 8),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              child: ListTile(
-                title: Text(food.name),
-                subtitle: Text(
-                  '${food.calories} cal | ${food.protein}g protein | ${food.carbs}g carbs | ${food.fats}g fat | ${food.addedSugar}g sugar',
+          return GestureDetector(
+            onTap: () => editTemplate(index, food),
+            child: ScaleTransition(
+              scale: CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+              child: Card(
+                elevation: 4,
+                margin: EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  title: Text(food.name),
+                  subtitle: Text(
+                    '${food.calories} cal | ${food.protein}g protein | ${food.carbs}g carbs | ${food.fats}g fat | ${food.addedSugar}g sugar',
+                  ),
+                  trailing: IconButton(
+                    icon: Icon(Icons.close, color: Colors.red),
+                    onPressed: () => deleteTemplate(index),
+                  ),
                 ),
-                trailing: IconButton(
-                  icon: Icon(Icons.close, color: Colors.red),
-                  onPressed: () => deleteTemplate(index),
-                ),
-                onTap: () {
-                  Navigator.pop(context, food);
-                },
               ),
             ),
           );

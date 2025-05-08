@@ -491,7 +491,7 @@ class _NutritionScreenState extends State<NutritionScreen> {
                                 setState(() {
                                   filteredTemplates = List.from(templates);
                                 });
-                                await saveTemplatesToFirestore(context); // <-- ADD THIS
+                                await saveTemplatesToFirestore(context);
                               }
                             },
                             child: Text('New Template'),
