@@ -10,7 +10,6 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import '../services/firestore_service.dart';
 
-
 class DayDetailScreen extends StatefulWidget {
   final DateTime date;
 
@@ -40,24 +39,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     loadHabit();
   }
 
-  // void loadHabit() {
-  //   final key = DateFormat('yyyy-MM-dd').format(widget.date);
-  //   final storedHabit = habitBox.get(key);
-  //   if (storedHabit != null) {
-  //     setState(() {
-  //       habit = storedHabit;
-  //       sleepHours = storedHabit.sleepHours;
-  //       moodRating = storedHabit.moodRating;
-  //       dietNotes = storedHabit.dietNotes;
-  //       exercises = storedHabit.exercises;
-  //       workoutNotes = storedHabit.workoutNotes;
-  //       dailyNotes = storedHabit.dailyNotes;
-  //       sleepQuality = storedHabit.sleepQuality;
-  //       sleepNotes = storedHabit.sleepNotes;
-  //     });
-  //   }
-  // }
-
   void saveHabit() {
     final key = DateFormat('yyyy-MM-dd').format(widget.date);
     final newHabit = Habit(
@@ -80,27 +61,40 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   void loadHabit() async {
     final key = DateFormat('yyyy-MM-dd').format(widget.date);
     Habit? storedHabit = habitBox.get(key);
-
     storedHabit ??= await loadHabitFromFirestore(widget.date, context);
 
     if (storedHabit != null) {
-      final Habit habitToUse = storedHabit;
+      final Habit nonNullHabit = storedHabit;
       setState(() {
-        habit = storedHabit;
-        sleepHours = habitToUse.sleepHours;
-        moodRating = habitToUse.moodRating;
-        dietNotes = habitToUse.dietNotes;
-        exercises = habitToUse.exercises;
-        workoutNotes = habitToUse.workoutNotes;
-        dailyNotes = habitToUse.dailyNotes;
-        sleepQuality = habitToUse.sleepQuality;
-        sleepNotes = habitToUse.sleepNotes;
+        habit = nonNullHabit;
+        sleepHours = nonNullHabit.sleepHours;
+        moodRating = nonNullHabit.moodRating;
+        dietNotes = nonNullHabit.dietNotes;
+        exercises = nonNullHabit.exercises;
+        workoutNotes = nonNullHabit.workoutNotes;
+        dailyNotes = nonNullHabit.dailyNotes;
+        sleepQuality = nonNullHabit.sleepQuality;
+        sleepNotes = nonNullHabit.sleepNotes;
       });
     }
   }
 
-
-
+  Future<T?> _slideToPage<T>(Widget page) {
+    return Navigator.push<T>(
+      context,
+      PageRouteBuilder(
+        transitionDuration: Duration(milliseconds: 300),
+        pageBuilder: (_, __, ___) => page,
+        transitionsBuilder: (_, animation, __, child) {
+          final offsetAnimation = Tween<Offset>(
+            begin: Offset(1.0, 0.0),
+            end: Offset.zero,
+          ).animate(animation);
+          return SlideTransition(position: offsetAnimation, child: child);
+        },
+      ),
+    );
+  }
 
   Widget _buildCategoryButton({
     required IconData icon,
@@ -125,6 +119,62 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     );
   }
 
+  Widget _buildDailySummaryCard() {
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 4,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('Today\'s Summary', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 12),
+            _buildSummaryRow('🛌 Sleep', sleepHours > 0
+                ? '${sleepHours.toStringAsFixed(1)}h • Quality: ${_sleepQualityText(sleepQuality)}'
+                : 'Not logged'),
+            _buildSummaryRow('🙂 Mood', moodRating > 0
+                ? 'Mood: $moodRating/10'
+                : 'Not logged'),
+            _buildSummaryRow('🏋️ Workouts', (habit?.workouts.isNotEmpty ?? false)
+                ? '${habit!.workouts.length} workout(s)'
+                : 'Not logged'),
+            _buildSummaryRow('🥗 Nutrition', (habit?.foods.isNotEmpty ?? false)
+                ? '${habit!.foods.fold(0.0, (sum, food) => sum + food.calories).toStringAsFixed(0)} cal'
+                : 'Not logged'),
+            _buildSummaryRow('📝 Notes', dailyNotes.isNotEmpty
+                ? 'Added'
+                : 'Not logged'),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryRow(String title, String detail) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(title, style: TextStyle(fontSize: 16)),
+          Text(detail, style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          )),
+        ],
+      ),
+    );
+  }
+
+  String _sleepQualityText(int quality) {
+    if (quality >= 4) return 'Excellent';
+    if (quality == 3) return 'Good';
+    if (quality == 2) return 'Okay';
+    return 'Poor';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -135,22 +185,20 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         padding: const EdgeInsets.all(16),
         child: ListView(
           children: [
+            _buildDailySummaryCard(),
+            SizedBox(height: 16),
             _buildCategoryButton(
               icon: Icons.bedtime,
               label: 'Sleep',
               color: Colors.indigoAccent,
               onPressed: () async {
-                final updatedSleepData = await Navigator.push<Map<String, dynamic>>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => SleepEntryScreen(
-                      initialSleepHours: sleepHours,
-                      initialSleepQuality: sleepQuality,
-                      initialSleepNotes: sleepNotes,
-                    ),
+                final updatedSleepData = await _slideToPage<Map<String, dynamic>>(
+                  SleepEntryScreen(
+                    initialSleepHours: sleepHours,
+                    initialSleepQuality: sleepQuality,
+                    initialSleepNotes: sleepNotes,
                   ),
                 );
-
                 if (updatedSleepData != null) {
                   setState(() {
                     sleepHours = updatedSleepData['sleepHours'];
@@ -161,17 +209,14 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 }
               },
             ),
-
-
             SizedBox(height: 12),
             _buildCategoryButton(
               icon: Icons.sentiment_satisfied_alt,
               label: 'Mood',
               color: Colors.pinkAccent,
               onPressed: () async {
-                final updatedMood = await Navigator.push<int>(
-                  context,
-                  MaterialPageRoute(builder: (context) => MoodEntryScreen(initialMoodRating: moodRating)),
+                final updatedMood = await _slideToPage<int>(
+                  MoodEntryScreen(initialMoodRating: moodRating),
                 );
                 if (updatedMood != null) {
                   setState(() {
@@ -187,19 +232,16 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               label: 'Workouts',
               color: Colors.blueAccent,
               onPressed: () async {
-                final updatedHabit = await Navigator.push<Habit>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => WorkoutsScreen(habit: habit ?? Habit(
-                      sleepHours: sleepHours,
-                      moodRating: moodRating,
-                      dietNotes: dietNotes,
-                      exercises: exercises,
-                      foods: [],
-                      workoutNotes: workoutNotes,
-                      dailyNotes: dailyNotes
-                    )),
-                  ),
+                final updatedHabit = await _slideToPage<Habit>(
+                  WorkoutsScreen(habit: habit ?? Habit(
+                    sleepHours: sleepHours,
+                    moodRating: moodRating,
+                    dietNotes: dietNotes,
+                    exercises: exercises,
+                    foods: [],
+                    workoutNotes: workoutNotes,
+                    dailyNotes: dailyNotes,
+                  )),
                 );
                 if (updatedHabit != null) {
                   setState(() {
@@ -216,19 +258,16 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               label: 'Nutrition',
               color: Colors.green,
               onPressed: () async {
-                final updatedHabit = await Navigator.push<Habit>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => NutritionScreen(habit: habit ?? Habit(
-                      sleepHours: sleepHours,
-                      moodRating: moodRating,
-                      dietNotes: dietNotes,
-                      exercises: exercises,
-                      foods: [],
-                      workoutNotes: workoutNotes,
-                      dailyNotes: dailyNotes
-                    )),
-                  ),
+                final updatedHabit = await _slideToPage<Habit>(
+                  NutritionScreen(habit: habit ?? Habit(
+                    sleepHours: sleepHours,
+                    moodRating: moodRating,
+                    dietNotes: dietNotes,
+                    exercises: exercises,
+                    foods: [],
+                    workoutNotes: workoutNotes,
+                    dailyNotes: dailyNotes,
+                  )),
                 );
                 if (updatedHabit != null) {
                   setState(() {
@@ -245,9 +284,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               label: 'Daily Notes',
               color: Colors.orange,
               onPressed: () async {
-                final updatedNotes = await Navigator.push<String>(
-                  context,
-                  MaterialPageRoute(builder: (context) => DailyNotesScreen(initialNotes: dailyNotes)),
+                final updatedNotes = await _slideToPage<String>(
+                  DailyNotesScreen(initialNotes: dailyNotes),
                 );
                 if (updatedNotes != null) {
                   setState(() {
