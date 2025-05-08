@@ -40,23 +40,23 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     loadHabit();
   }
 
-  void loadHabit() {
-    final key = DateFormat('yyyy-MM-dd').format(widget.date);
-    final storedHabit = habitBox.get(key);
-    if (storedHabit != null) {
-      setState(() {
-        habit = storedHabit;
-        sleepHours = storedHabit.sleepHours;
-        moodRating = storedHabit.moodRating;
-        dietNotes = storedHabit.dietNotes;
-        exercises = storedHabit.exercises;
-        workoutNotes = storedHabit.workoutNotes;
-        dailyNotes = storedHabit.dailyNotes;
-        sleepQuality = storedHabit.sleepQuality;
-        sleepNotes = storedHabit.sleepNotes;
-      });
-    }
-  }
+  // void loadHabit() {
+  //   final key = DateFormat('yyyy-MM-dd').format(widget.date);
+  //   final storedHabit = habitBox.get(key);
+  //   if (storedHabit != null) {
+  //     setState(() {
+  //       habit = storedHabit;
+  //       sleepHours = storedHabit.sleepHours;
+  //       moodRating = storedHabit.moodRating;
+  //       dietNotes = storedHabit.dietNotes;
+  //       exercises = storedHabit.exercises;
+  //       workoutNotes = storedHabit.workoutNotes;
+  //       dailyNotes = storedHabit.dailyNotes;
+  //       sleepQuality = storedHabit.sleepQuality;
+  //       sleepNotes = storedHabit.sleepNotes;
+  //     });
+  //   }
+  // }
 
   void saveHabit() {
     final key = DateFormat('yyyy-MM-dd').format(widget.date);
@@ -76,6 +76,31 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     habit = newHabit;
     saveHabitToFirestore(widget.date, newHabit, context);
   }
+
+  void loadHabit() async {
+    final key = DateFormat('yyyy-MM-dd').format(widget.date);
+    Habit? storedHabit = habitBox.get(key);
+
+    storedHabit ??= await loadHabitFromFirestore(widget.date, context);
+
+    if (storedHabit != null) {
+      final Habit habitToUse = storedHabit;
+      setState(() {
+        habit = storedHabit;
+        sleepHours = habitToUse.sleepHours;
+        moodRating = habitToUse.moodRating;
+        dietNotes = habitToUse.dietNotes;
+        exercises = habitToUse.exercises;
+        workoutNotes = habitToUse.workoutNotes;
+        dailyNotes = habitToUse.dailyNotes;
+        sleepQuality = habitToUse.sleepQuality;
+        sleepNotes = habitToUse.sleepNotes;
+      });
+    }
+  }
+
+
+
 
   Widget _buildCategoryButton({
     required IconData icon,
