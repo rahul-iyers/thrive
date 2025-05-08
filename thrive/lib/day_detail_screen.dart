@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
@@ -80,18 +81,9 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   }
 
   Future<T?> _slideToPage<T>(Widget page) {
-    return Navigator.push<T>(
-      context,
-      PageRouteBuilder(
-        transitionDuration: Duration(milliseconds: 300),
-        pageBuilder: (_, __, ___) => page,
-        transitionsBuilder: (_, animation, __, child) {
-          final offsetAnimation = Tween<Offset>(
-            begin: Offset(1.0, 0.0),
-            end: Offset.zero,
-          ).animate(animation);
-          return SlideTransition(position: offsetAnimation, child: child);
-        },
+    return Navigator.of(context).push<T>(
+      CupertinoPageRoute(
+        builder: (_) => page,
       ),
     );
   }
