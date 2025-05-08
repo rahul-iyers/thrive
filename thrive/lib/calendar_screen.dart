@@ -18,18 +18,21 @@ class CalendarScreen extends StatefulWidget {
 
 class _CalendarScreenState extends State<CalendarScreen> {
   DateTime _focusedMonth = DateTime.now();
-  late Box<Habit> habitBox;
+  Box<Habit>? habitBox;
   DateTime? _tappedDay;
+  bool _hasLoadedTemplates = false;
 
   @override
   void initState() {
     super.initState();
     habitBox = Hive.box<Habit>('habits');
-
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        await loadTemplatesFromFirestore(GlobalContextService.globalContext);
+      if (!_hasLoadedTemplates) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          _hasLoadedTemplates = true;  // ✅ only load once
+          await loadTemplatesFromFirestore(GlobalContextService.globalContext);
+        }
       }
     });
   }
@@ -292,8 +295,10 @@ class _CalendarScreenState extends State<CalendarScreen> {
   }
 
   String _getDotColor(DateTime day) {
+    if (habitBox == null) return 'none'; // <-- defensive check
+
     final key = DateFormat('yyyy-MM-dd').format(day);
-    final habit = habitBox.get(key);
+    final habit = habitBox!.get(key);
 
     if (habit != null) {
       if (habit.exercises.isNotEmpty ||
