@@ -391,12 +391,12 @@ class _NutritionScreenState extends State<NutritionScreen> {
     List<Food> filteredTemplates = List.from(templates);
     TextEditingController _searchController = TextEditingController();
 
-    if (templates.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('No templates available')),
-      );
-      return null;
-    }
+    // if (templates.isEmpty) {
+    //   ScaffoldMessenger.of(context).showSnackBar(
+    //     SnackBar(content: Text('No templates available')),
+    //   );
+    //   return null;
+    // }
 
     return await showModalBottomSheet<Food>(
       context: context,

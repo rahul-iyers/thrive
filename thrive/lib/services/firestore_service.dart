@@ -8,6 +8,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/habit.dart'; // adjust path as needed
 
+bool templatesLoaded = false;
+
 Future<void> saveHabitToFirestore(DateTime date, Habit habit, BuildContext context) async {
   final user = FirebaseAuth.instance.currentUser;
 
@@ -148,6 +150,138 @@ Future<Habit?> loadHabitFromFirestore(DateTime date, BuildContext context) async
       SnackBar(content: Text('Failed to load habit from cloud')),
     );
     return null;
+  }
+}
+
+Future<void> saveTemplatesToFirestore(BuildContext context) async {
+  final user = FirebaseAuth.instance.currentUser;
+
+  if (user == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Not signed in.')),
+    );
+    return;
+  }
+
+  final exerciseBox = Hive.box<Exercise>('exercise_templates');
+  final foodBox = Hive.box<Food>('food_templates');
+
+  final firestore = FirebaseFirestore.instance;
+  final userId = user.uid;
+
+  try {
+    final exercises = exerciseBox.values.map((e) => e.toMap()).toList();
+    final foods = foodBox.values.map((f) => f.toMap()).toList();
+
+    await firestore
+        .collection('users')
+        .doc(userId)
+        .collection('templates')
+        .doc('user_templates')
+        .set({
+      'exercises': exercises,
+      'foods': foods,
+    });
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Templates saved to cloud successfully!')),
+    );
+  } catch (e) {
+    print('Error saving templates: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to save templates')),
+    );
+  }
+}
+
+Future<void> loadTemplatesFromFirestore(BuildContext context) async {
+  if (templatesLoaded) {
+    print('Templates already loaded — skipping...');
+    return;
+  }
+
+  print('Loading templates from Firestore...');
+
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) {
+    print('No user signed in.');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Not signed in.')),
+    );
+    return;
+  }
+
+  final exerciseBox = Hive.box<Exercise>('exercise_templates');
+  final foodBox = Hive.box<Food>('food_templates');
+  final firestore = FirebaseFirestore.instance;
+  final userId = user.uid;
+
+  try {
+    final docSnapshot = await firestore
+        .collection('users')
+        .doc(userId)
+        .collection('templates')
+        .doc('user_templates')
+        .get();
+
+    if (docSnapshot.exists) {
+      print('Templates document found.');
+
+      final data = docSnapshot.data();
+
+      if (data != null) {
+        print('Templates data received.');
+
+        final exercises = (data['exercises'] as List<dynamic>?) ?? [];
+        final foods = (data['foods'] as List<dynamic>?) ?? [];
+
+        print('Clearing local boxes...');
+        await exerciseBox.clear();
+        await foodBox.clear();
+        print('Cleared.');
+
+        print('Adding exercises...');
+        for (var e in exercises) {
+          final exercise = Exercise(
+            name: e['name'] ?? '',
+            minutes: (e['minutes'] ?? 0),
+            sets: (e['sets'] ?? 0),
+            reps: e['reps'] ?? '',
+            weight: e['weight'] ?? '',
+            notes: e['notes'] ?? '',
+            type: e['type'] ?? 'Gym',
+          );
+          await exerciseBox.add(exercise);
+        }
+
+        print('Adding foods...');
+        for (var f in foods) {
+          final food = Food(
+            name: f['name'] ?? '',
+            calories: (f['calories'] ?? 0).toDouble(),
+            carbs: (f['carbs'] ?? 0).toDouble(),
+            protein: (f['protein'] ?? 0).toDouble(),
+            fats: (f['fats'] ?? 0).toDouble(),
+            addedSugar: (f['addedSugar'] ?? 0).toDouble(),
+          );
+          await foodBox.add(food);
+        }
+
+        print('Finished loading templates.');
+        templatesLoaded = true;
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Templates loaded from cloud!')),
+        );
+      }
+    } else {
+      print('No templates document found.');
+    }
+  } catch (e) {
+    print('Error loading templates: $e');
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load templates')),
+    );
   }
 }
 

@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-
+import 'services/global_context_service.dart';
 import 'calendar_screen.dart';
-import 'firebase_options.dart'; // newly generated!
-import 'screens/login_screen.dart'; // your new login screen
+import 'firebase_options.dart';
+import 'screens/login_screen.dart';
+
 import 'models/habit.dart';
 import 'models/exercise.dart';
 import 'models/food.dart';
@@ -48,6 +49,7 @@ class Thrive extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Thrive',
+      navigatorKey: GlobalContextService.navigatorKey,
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),

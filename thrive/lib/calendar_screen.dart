@@ -4,9 +4,12 @@ import 'package:intl/intl.dart';
 import 'day_detail_screen.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
+import 'models/food.dart';
 import 'screens/exercise_templates_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/login_screen.dart';
+import 'services/global_context_service.dart';
+import 'services/firestore_service.dart';
 
 class CalendarScreen extends StatefulWidget {
   @override
@@ -22,6 +25,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   void initState() {
     super.initState();
     habitBox = Hive.box<Habit>('habits');
+
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        await loadTemplatesFromFirestore(GlobalContextService.globalContext);
+      }
+    });
   }
 
   @override
