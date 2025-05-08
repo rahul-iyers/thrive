@@ -5,6 +5,8 @@ import 'day_detail_screen.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
 import 'screens/exercise_templates_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'screens/login_screen.dart';
 
 class CalendarScreen extends StatefulWidget {
   @override
@@ -30,7 +32,21 @@ class _CalendarScreenState extends State<CalendarScreen> {
       appBar: AppBar(
         title: Text('Thrive Calendar'),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.logout),
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+                    (route) => false,
+              );
+            },
+          ),
+        ],
       ),
+
       body: Column(
         children: [
           _buildMonthHeader(),

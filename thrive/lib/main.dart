@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+
 import 'calendar_screen.dart';
+import 'firebase_options.dart'; // newly generated!
+import 'screens/login_screen.dart'; // your new login screen
 import 'models/habit.dart';
 import 'models/exercise.dart';
 import 'models/food.dart';
@@ -8,6 +13,9 @@ import 'models/workout.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   await Hive.initFlutter();
 
   // Register all adapters
@@ -43,7 +51,32 @@ class Thrive extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: CalendarScreen(),
+      home: AuthGate(), // <-- new widget to handle login vs calendar
+      debugShowCheckedModeBanner: false,
+    );
+  }
+}
+
+// New Widget: AuthGate
+class AuthGate extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<User?>(
+      stream: FirebaseAuth.instance.authStateChanges(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          // While checking login state, show loading spinner
+          return Scaffold(
+            body: Center(child: CircularProgressIndicator()),
+          );
+        } else if (snapshot.hasData) {
+          // Logged in
+          return CalendarScreen();
+        } else {
+          // Not logged in
+          return LoginScreen();
+        }
+      },
     );
   }
 }
