@@ -8,6 +8,8 @@ import 'screens/mood_entry_screen.dart';
 import 'screens/daily_notes_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
+import '../services/firestore_service.dart';
+
 
 class DayDetailScreen extends StatefulWidget {
   final DateTime date;
@@ -72,6 +74,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     );
     habitBox.put(key, newHabit);
     habit = newHabit;
+    saveHabitToFirestore(widget.date, newHabit, context);
   }
 
   Widget _buildCategoryButton({

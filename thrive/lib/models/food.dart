@@ -30,4 +30,15 @@ class Food extends HiveObject {
     this.fats = 0,
     this.addedSugar = 0,
   });
+
+  Map<String, dynamic> toMap() {
+    return {
+      'name': name,
+      'calories': calories,
+      'carbs': carbs,
+      'protein': protein,
+      'fats': fats,
+      'addedSugar': addedSugar,
+    };
+  }
 }
