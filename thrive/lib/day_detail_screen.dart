@@ -2,6 +2,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'models/habit.dart';
 import 'models/exercise.dart';
+import 'models/mood_entry.dart';
 import 'screens/nutrition_screen.dart';
 import 'screens/workouts_screen.dart';
 import 'screens/sleep_entry_screen.dart';
@@ -25,7 +26,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   Habit? habit;
 
   double sleepHours = 0;
-  int moodRating = 5;
+  List<MoodEntry> moodEntries = [];
   String dietNotes = '';
   List<Exercise> exercises = [];
   String workoutNotes = '';
@@ -44,7 +45,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     final key = DateFormat('yyyy-MM-dd').format(widget.date);
     final newHabit = Habit(
       sleepHours: sleepHours,
-      moodRating: moodRating,
+      moodEntries: moodEntries,
       dietNotes: dietNotes,
       exercises: exercises,
       foods: habit?.foods ?? [],
@@ -69,7 +70,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
       setState(() {
         habit = nonNullHabit;
         sleepHours = nonNullHabit.sleepHours;
-        moodRating = nonNullHabit.moodRating;
+        moodEntries = nonNullHabit.moodEntries;
         dietNotes = nonNullHabit.dietNotes;
         exercises = nonNullHabit.exercises;
         workoutNotes = nonNullHabit.workoutNotes;
@@ -125,8 +126,8 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             _buildSummaryRow('🛌 Sleep', sleepHours > 0
                 ? '${sleepHours.toStringAsFixed(1)}h • Quality: ${_sleepQualityText(sleepQuality)}'
                 : 'Not logged'),
-            _buildSummaryRow('🙂 Mood', moodRating > 0
-                ? 'Mood: $moodRating/10'
+            _buildSummaryRow('🙂 Mood', (habit?.moodEntries.isNotEmpty ?? false)
+                ? '${habit!.moodEntries.length} log(s)'
                 : 'Not logged'),
             _buildSummaryRow('🏋️ Workouts', (habit?.workouts.isNotEmpty ?? false)
                 ? '${habit!.workouts.length} workout(s)'
@@ -207,12 +208,22 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               label: 'Mood',
               color: Colors.pinkAccent,
               onPressed: () async {
-                final updatedMood = await _slideToPage<int>(
-                  MoodEntryScreen(initialMoodRating: moodRating),
+                final updatedHabit = await _slideToPage<Habit>(
+                  MoodEntryScreen(habit: habit ?? Habit(
+                    sleepHours: sleepHours,
+                    moodEntries: moodEntries,
+                    dietNotes: dietNotes,
+                    exercises: exercises,
+                    foods: [],
+                    workouts: [],
+                    workoutNotes: workoutNotes,
+                    dailyNotes: dailyNotes,
+                  )),
                 );
-                if (updatedMood != null) {
+                if (updatedHabit != null) {
                   setState(() {
-                    moodRating = updatedMood;
+                    habit = updatedHabit;
+                    moodEntries = updatedHabit.moodEntries;
                   });
                   saveHabit();
                 }
@@ -227,7 +238,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 final updatedHabit = await _slideToPage<Habit>(
                   WorkoutsScreen(habit: habit ?? Habit(
                     sleepHours: sleepHours,
-                    moodRating: moodRating,
+                    moodEntries: moodEntries,
                     dietNotes: dietNotes,
                     exercises: exercises,
                     foods: [],
@@ -253,7 +264,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 final updatedHabit = await _slideToPage<Habit>(
                   NutritionScreen(habit: habit ?? Habit(
                     sleepHours: sleepHours,
-                    moodRating: moodRating,
+                    moodEntries: moodEntries,
                     dietNotes: dietNotes,
                     exercises: exercises,
                     foods: [],

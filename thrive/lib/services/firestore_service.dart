@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../models/exercise.dart';
 import '../models/workout.dart';
 import '../models/food.dart';
+import '../models/mood_entry.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
 import '../models/habit.dart'; // adjust path as needed
@@ -26,7 +27,7 @@ Future<void> saveHabitToFirestore(DateTime date, Habit habit, BuildContext conte
 
   final habitData = {
     'sleepHours': habit.sleepHours,
-    'moodRating': habit.moodRating,
+    'moodEntries': habit.moodEntries.map((e) => e.toMap()).toList(),
     'dietNotes': habit.dietNotes,
     'workoutNotes': habit.workoutNotes,
     'dailyNotes': habit.dailyNotes,
@@ -97,7 +98,11 @@ Future<Habit?> loadHabitFromFirestore(DateTime date, BuildContext context) async
       // Rebuild Habit from Firestore data
       final habit = Habit(
         sleepHours: (data['sleepHours'] ?? 0).toDouble(),
-        moodRating: (data['moodRating'] ?? 0).toInt(),
+        moodEntries: (data['moodEntries'] as List<dynamic>?)?.map((entry) => MoodEntry(
+          timestamp: DateTime.tryParse(entry['timestamp'] ?? '') ?? DateTime.now(),
+          rating: (entry['rating'] ?? 5).toInt(),
+          notes: entry['notes'] ?? '',
+        )).toList() ?? [],
         dietNotes: (data['dietNotes'] ?? ''),
         exercises: (data['exercises'] as List<dynamic>?)?.map((e) => Exercise(
           name: e['name'] ?? '',

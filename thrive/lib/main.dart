@@ -11,6 +11,7 @@ import 'models/habit.dart';
 import 'models/exercise.dart';
 import 'models/food.dart';
 import 'models/workout.dart';
+import 'models/mood_entry.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -24,6 +25,7 @@ Future<void> main() async {
   Hive.registerAdapter(ExerciseAdapter());
   Hive.registerAdapter(WorkoutAdapter());
   Hive.registerAdapter(FoodAdapter());
+  Hive.registerAdapter(MoodEntryAdapter());
 
   // Safely open all boxes
   await openSafeBox<Habit>('habits');

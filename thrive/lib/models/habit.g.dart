@@ -18,7 +18,7 @@ class HabitAdapter extends TypeAdapter<Habit> {
     };
     return Habit(
       sleepHours: fields[0] as double,
-      moodRating: fields[1] as int,
+      moodEntries: (fields[1] as List).cast<MoodEntry>(),
       dietNotes: fields[2] as String,
       exercises: (fields[3] as List).cast<Exercise>(),
       foods: (fields[4] as List).cast<Food>(),
@@ -37,7 +37,7 @@ class HabitAdapter extends TypeAdapter<Habit> {
       ..writeByte(0)
       ..write(obj.sleepHours)
       ..writeByte(1)
-      ..write(obj.moodRating)
+      ..write(obj.moodEntries)
       ..writeByte(2)
       ..write(obj.dietNotes)
       ..writeByte(3)
