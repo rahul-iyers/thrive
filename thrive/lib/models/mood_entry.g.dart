@@ -8,7 +8,7 @@ part of 'mood_entry.dart';
 
 class MoodEntryAdapter extends TypeAdapter<MoodEntry> {
   @override
-  final int typeId = 5;
+  final int typeId = 4;
 
   @override
   MoodEntry read(BinaryReader reader) {
@@ -17,21 +17,24 @@ class MoodEntryAdapter extends TypeAdapter<MoodEntry> {
       for (int i = 0; i < numOfFields; i++) reader.readByte(): reader.read(),
     };
     return MoodEntry(
-      timestamp: fields[0] as DateTime,
-      rating: fields[1] as int,
-      notes: fields[2] as String,
+      id: fields[0] as String,
+      timestamp: fields[1] as DateTime,
+      rating: fields[2] as int,
+      notes: fields[3] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, MoodEntry obj) {
     writer
-      ..writeByte(3)
+      ..writeByte(4)
       ..writeByte(0)
-      ..write(obj.timestamp)
+      ..write(obj.id)
       ..writeByte(1)
-      ..write(obj.rating)
+      ..write(obj.timestamp)
       ..writeByte(2)
+      ..write(obj.rating)
+      ..writeByte(3)
       ..write(obj.notes);
   }
 

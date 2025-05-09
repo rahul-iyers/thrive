@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import '../models/mood_entry.dart';
+import 'package:intl/intl.dart';
 import '../models/habit.dart';
+import '../models/mood_entry.dart';
+import 'package:uuid/uuid.dart';
+import 'package:hive/hive.dart';
+import '../services/firestore_service.dart';
 
 class MoodEntryScreen extends StatefulWidget {
-  final Habit habit; // <-- pass in Habit!
+  final Habit habit;
 
   MoodEntryScreen({required this.habit});
 
@@ -12,96 +16,123 @@ class MoodEntryScreen extends StatefulWidget {
 }
 
 class _MoodEntryScreenState extends State<MoodEntryScreen> {
-  int moodRating = 5;
-  TextEditingController notesController = TextEditingController();
+  late List<MoodEntry> moodEntries;
 
-  void _saveMood() {
-    final newEntry = MoodEntry(
-      timestamp: DateTime.now(),
-      rating: moodRating,
-      notes: notesController.text,
+  @override
+  void initState() {
+    super.initState();
+    moodEntries = List<MoodEntry>.from(widget.habit.moodEntries);
+  }
+
+  void _addEntry() {
+    setState(() {
+      moodEntries.add(MoodEntry(
+        id: Uuid().v4(),
+        timestamp: DateTime.now(),
+        rating: 5,
+        notes: '',
+      ));
+    });
+    _save();
+  }
+
+  void _deleteEntry(String id) {
+    setState(() {
+      moodEntries.removeWhere((entry) => entry.id == id);
+    });
+    _save();
+  }
+
+  void _updateEntry(String id, int rating, String notes) {
+    setState(() {
+      final index = moodEntries.indexWhere((e) => e.id == id);
+      if (index != -1) {
+        moodEntries[index] = MoodEntry(
+          id: id,
+          timestamp: moodEntries[index].timestamp,
+          rating: rating,
+          notes: notes,
+        );
+      }
+    });
+    _save();
+  }
+
+  void _save() {
+    final updatedHabit = widget.habit..moodEntries = moodEntries;
+    final box = Hive.box<Habit>('habits');
+    box.put(widget.habit.key, updatedHabit);
+    saveHabitToFirestore(DateTime.parse(widget.habit.key), updatedHabit, context);
+  }
+
+  Widget _buildMoodCard(MoodEntry entry) {
+    final controller = TextEditingController(text: entry.notes);
+    return Card(
+      margin: EdgeInsets.symmetric(vertical: 8),
+      elevation: 4,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(DateFormat.jm().format(entry.timestamp), style: TextStyle(fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: Icon(Icons.delete, color: Colors.red),
+                  onPressed: () => _deleteEntry(entry.id),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text('Mood Rating: ${entry.rating}', style: TextStyle(fontSize: 16)),
+            Slider(
+              value: entry.rating.toDouble(),
+              min: 1,
+              max: 10,
+              divisions: 9,
+              label: entry.rating.toString(),
+              onChanged: (value) {
+                _updateEntry(entry.id, value.toInt(), controller.text);
+              },
+            ),
+            TextField(
+              controller: controller,
+              onChanged: (val) => _updateEntry(entry.id, entry.rating, val),
+              decoration: InputDecoration(
+                labelText: 'Notes',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: null,
+            ),
+          ],
+        ),
+      ),
     );
-
-    final updatedMoodEntries = List<MoodEntry>.from(widget.habit.moodEntries)
-      ..add(newEntry);
-
-    final updatedHabit = Habit(
-      sleepHours: widget.habit.sleepHours,
-      moodEntries: updatedMoodEntries,
-      dietNotes: widget.habit.dietNotes,
-      exercises: widget.habit.exercises,
-      foods: widget.habit.foods,
-      workouts: widget.habit.workouts,
-      workoutNotes: widget.habit.workoutNotes,
-      dailyNotes: widget.habit.dailyNotes,
-      sleepQuality: widget.habit.sleepQuality,
-      sleepNotes: widget.habit.sleepNotes,
-    );
-
-    Navigator.pop(context, updatedHabit);
   }
 
   @override
   Widget build(BuildContext context) {
-    final entries = widget.habit.moodEntries.reversed.toList(); // newest first
-
     return Scaffold(
-      appBar: AppBar(title: Text('Mood Tracker')),
+      appBar: AppBar(
+        title: Text('Mood Logs'),
+      ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            Text('Rate your mood (1–10)', style: TextStyle(fontSize: 18)),
-            Slider(
-              min: 1,
-              max: 10,
-              divisions: 9,
-              value: moodRating.toDouble(),
-              label: moodRating.toString(),
-              onChanged: (value) {
-                setState(() {
-                  moodRating = value.toInt();
-                });
-              },
-            ),
-            TextField(
-              controller: notesController,
-              decoration: InputDecoration(
-                labelText: 'Add notes (optional)',
-              ),
-              maxLines: 2,
-            ),
-            SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _saveMood,
-              child: Text('Save Mood Entry'),
-            ),
-            SizedBox(height: 24),
-            Divider(),
-            Text('Today\'s Entries', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 12),
-            Expanded(
-              child: entries.isEmpty
-                  ? Center(child: Text('No mood entries yet.'))
-                  : ListView.builder(
-                itemCount: entries.length,
-                itemBuilder: (context, index) {
-                  final entry = entries[index];
-                  return ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: Colors.pinkAccent,
-                      child: Text(entry.rating.toString(), style: TextStyle(color: Colors.white)),
-                    ),
-                    title: Text(entry.notes.isNotEmpty ? entry.notes : 'No notes'),
-                    subtitle: Text(
-                      '${TimeOfDay.fromDateTime(entry.timestamp).format(context)}',
-                    ),
-                  );
-                },
-              ),
-            )
-          ],
+        padding: const EdgeInsets.all(16),
+        child: moodEntries.isEmpty
+            ? Center(child: Text('No mood entries yet.\nTap + to add one.', textAlign: TextAlign.center))
+            : ListView.builder(
+          itemCount: moodEntries.length,
+          itemBuilder: (context, index) {
+            return _buildMoodCard(moodEntries[index]);
+          },
         ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _addEntry,
+        child: Icon(Icons.add),
       ),
     );
   }

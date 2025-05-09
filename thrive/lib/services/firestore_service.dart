@@ -99,6 +99,7 @@ Future<Habit?> loadHabitFromFirestore(DateTime date, BuildContext context) async
       final habit = Habit(
         sleepHours: (data['sleepHours'] ?? 0).toDouble(),
         moodEntries: (data['moodEntries'] as List<dynamic>?)?.map((entry) => MoodEntry(
+          id: entry['id'] ?? UniqueKey().toString(),
           timestamp: DateTime.tryParse(entry['timestamp'] ?? '') ?? DateTime.now(),
           rating: (entry['rating'] ?? 5).toInt(),
           notes: entry['notes'] ?? '',
