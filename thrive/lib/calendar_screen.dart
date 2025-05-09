@@ -4,6 +4,7 @@ import 'package:intl/intl.dart';
 import 'day_detail_screen.dart';
 import 'models/habit.dart';
 import 'screens/exercise_templates_screen.dart';
+import 'screens/profile_screen.dart';
 import 'screens/food_templates_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/login_screen.dart';
@@ -43,9 +44,18 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       backgroundColor: Color(0xff4e4d4a),
       appBar: AppBar(
+        leading: IconButton(
+          icon: Icon(Icons.person, color: Colors.yellow),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => ProfileScreen()),
+            );
+          },
+        ),
         title: Text(
-            'Thrive',
-            style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold)
+          'Thrive',
+          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         backgroundColor: Color(0xff4e4d4a),
@@ -65,6 +75,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ],
       ),
+
       body: Column(
         children: [
           _buildMonthHeader(),
