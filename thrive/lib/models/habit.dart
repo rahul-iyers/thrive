@@ -2,6 +2,7 @@ import 'package:hive/hive.dart';
 import 'exercise.dart';
 import 'food.dart';
 import 'workout.dart';
+import 'mood_entry.dart';
 
 part 'habit.g.dart';
 
@@ -11,7 +12,7 @@ class Habit extends HiveObject {
   double sleepHours;
 
   @HiveField(1)
-  int moodRating;
+  List<MoodEntry> moodEntries;
 
   @HiveField(2)
   String dietNotes;
@@ -39,7 +40,7 @@ class Habit extends HiveObject {
 
   Habit({
     required this.sleepHours,
-    required this.moodRating,
+    required this.moodEntries,
     required this.dietNotes,
     required this.exercises,
     this.foods = const [],
