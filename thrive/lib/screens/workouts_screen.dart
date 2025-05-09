@@ -190,7 +190,12 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> with SingleTickerProvid
                     onPressed: () {
                       Navigator.pop(
                         context,
-                        Workout(name: name, type: type, minutes: minutes),
+                        Workout(
+                            name: name,
+                            type: type,
+                            minutes: minutes,
+                            exercises: workout.exercises
+                        )
                       );
                     },
                     child: Text('Save'),
