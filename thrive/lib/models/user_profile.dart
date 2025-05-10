@@ -40,6 +40,9 @@ class UserProfile extends HiveObject {
   @HiveField(11)
   DateTime? createdAt;
 
+  @HiveField(12)
+  double? sleepGoal;
+
   UserProfile({
     required this.displayName,
     this.photoUrl,
@@ -53,6 +56,7 @@ class UserProfile extends HiveObject {
     this.age,
     this.heightInches,
     this.createdAt,
+    this.sleepGoal
   });
 
   UserProfile copyWith({
@@ -66,6 +70,7 @@ class UserProfile extends HiveObject {
     double? heightInches,
     String? gender,
     String? weightUnit,
+    double? sleepGoal
   }) {
     return UserProfile(
       displayName: displayName ?? this.displayName,
@@ -78,6 +83,7 @@ class UserProfile extends HiveObject {
       heightInches: heightInches ?? this.heightInches,
       gender: gender ?? this.gender,
       weightUnit: weightUnit ?? this.weightUnit,
+      sleepGoal: sleepGoal ?? this.sleepGoal
     );
   }
 
