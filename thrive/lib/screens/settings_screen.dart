@@ -12,6 +12,10 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController ageController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
+  final TextEditingController weightGoalController = TextEditingController();
+  final TextEditingController calorieGoalController = TextEditingController();
+  final TextEditingController workoutGoalController = TextEditingController();
+  final TextEditingController proteinGoalController = TextEditingController();
   String gender = 'Other';
   String weightUnit = 'Imperial';
 
@@ -30,6 +34,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (cached != null) {
       ageController.text = cached.age?.toString() ?? '';
       heightController.text = cached.heightInches?.toString() ?? '';
+      weightGoalController.text = cached.weightGoal?.toString() ?? '';
+      calorieGoalController.text = cached.calorieGoal?.toString() ?? '';
+      workoutGoalController.text = cached.workoutGoal?.toString() ?? '';
+      proteinGoalController.text = cached.proteinGoal?.toString() ?? '';
       gender = cached.gender ?? 'Other';
       weightUnit = cached.weightUnit ?? 'Imperial';
       setState(() {});
@@ -40,6 +48,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (data != null) {
       ageController.text = data['age']?.toString() ?? ageController.text;
       heightController.text = data['heightInches']?.toString() ?? heightController.text;
+      weightGoalController.text = data['weightGoal']?.toString() ?? weightGoalController.text;
+      calorieGoalController.text = data['calorieGoal']?.toString() ?? calorieGoalController.text;
+      workoutGoalController.text = data['workoutGoal']?.toString() ?? workoutGoalController.text;
+      proteinGoalController.text = data['proteinGoal']?.toString() ?? proteinGoalController.text;
       gender = data['gender'] ?? gender;
       weightUnit = data['weightUnit'] ?? weightUnit;
       setState(() {});
@@ -55,6 +67,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
       heightInches: double.tryParse(heightController.text),
       gender: gender,
       weightUnit: weightUnit,
+      weightGoal: int.tryParse(weightGoalController.text),
+      calorieGoal: int.tryParse(calorieGoalController.text),
+      workoutGoal: int.tryParse(workoutGoalController.text),
+      proteinGoal: int.tryParse(proteinGoalController.text),
     );
 
     await box.put('cached', updated);
@@ -64,36 +80,45 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'heightInches': updated.heightInches,
       'gender': updated.gender,
       'weightUnit': updated.weightUnit,
+      'weightGoal': updated.weightGoal,
+      'calorieGoal': updated.calorieGoal,
+      'workoutGoal': updated.workoutGoal,
+      'proteinGoal': updated.proteinGoal,
     }, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Settings saved')));
   }
 
   @override
-  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Settings')),
       body: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            _buildField('Age', ageController),
-            _buildField('Height (inches)', heightController),
-            _buildDropdown('Gender', ['Male', 'Female', 'Other'], gender, (val) => setState(() => gender = val!)),
-            _buildDropdown('Weight Unit', ['Imperial', 'Metric'], weightUnit, (val) => setState(() => weightUnit = val!)),
-            SizedBox(height: 24),
-            ElevatedButton.icon(
-              icon: Icon(Icons.save),
-              label: Text('Save Settings'),
-              onPressed: _saveSettings,
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildField('Age', ageController),
+              _buildField('Height (inches)', heightController),
+              _buildDropdown('Gender', ['Male', 'Female', 'Other'], gender, (val) => setState(() => gender = val!)),
+              _buildDropdown('Weight Unit', ['Imperial', 'Metric'], weightUnit, (val) => setState(() => weightUnit = val!)),
+              Divider(height: 32),
+              _buildField('Weight Goal (lbs)', weightGoalController),
+              _buildField('Calorie Goal (kcal)', calorieGoalController),
+              _buildField('Workouts per Week', workoutGoalController),
+              _buildField('Protein Goal (g)', proteinGoalController),
+              SizedBox(height: 24),
+              ElevatedButton.icon(
+                icon: Icon(Icons.save),
+                label: Text('Save Settings'),
+                onPressed: _saveSettings,
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
-
 
   Widget _buildField(String label, TextEditingController controller) {
     return Padding(

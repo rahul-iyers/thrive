@@ -10,6 +10,7 @@ import 'package:hive/hive.dart';
 import '../models/user_profile.dart';
 import 'settings_screen.dart';
 
+// ... imports unchanged ...
 class ProfileScreen extends StatefulWidget {
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -20,11 +21,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final _firestore = FirebaseFirestore.instance;
 
   final TextEditingController nameController = TextEditingController();
-  final TextEditingController weightController = TextEditingController();
-  final TextEditingController calorieController = TextEditingController();
-  final TextEditingController workoutController = TextEditingController();
-  final TextEditingController proteinController = TextEditingController();
-
   String? photoUrl;
 
   @override
@@ -39,10 +35,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (cached != null) {
       nameController.text = cached.displayName;
       photoUrl = cached.photoUrl;
-      weightController.text = cached.weightGoal?.toString() ?? '';
-      calorieController.text = cached.calorieGoal?.toString() ?? '';
-      workoutController.text = cached.workoutGoal?.toString() ?? '';
-      proteinController.text = cached.proteinGoal?.toString() ?? '';
       setState(() {});
     }
 
@@ -50,10 +42,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final data = doc.data();
     if (data != null) {
       nameController.text = data['displayName'] ?? user?.displayName ?? '';
-      weightController.text = data['weightGoal']?.toString() ?? '';
-      calorieController.text = data['calorieGoal']?.toString() ?? '';
-      workoutController.text = data['workoutGoal']?.toString() ?? '';
-      proteinController.text = data['proteinGoal']?.toString() ?? '';
       photoUrl = data['photoUrl'] ?? user?.photoURL;
       setState(() {});
     }
@@ -68,25 +56,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     await user!.reload();
 
-    final profile = UserProfile(
-      displayName: nameController.text.trim(),
-      photoUrl: photoUrl,
-      weightGoal: int.tryParse(weightController.text),
-      calorieGoal: int.tryParse(calorieController.text),
-      workoutGoal: int.tryParse(workoutController.text),
-      proteinGoal: int.tryParse(proteinController.text),
-    );
-
     final box = Hive.box<UserProfile>('userProfile');
-    box.put('cached', profile);
+    final current = box.get('cached') ?? UserProfile(displayName: '', photoUrl: null);
+    final updated = current.copyWith(displayName: nameController.text.trim(), photoUrl: photoUrl);
+    box.put('cached', updated);
 
     await _firestore.collection('users').doc(user!.uid).set({
-      'displayName': profile.displayName,
-      'weightGoal': profile.weightGoal,
-      'calorieGoal': profile.calorieGoal,
-      'workoutGoal': profile.workoutGoal,
-      'proteinGoal': profile.proteinGoal,
-      'photoUrl': profile.photoUrl,
+      'displayName': updated.displayName,
+      'photoUrl': updated.photoUrl,
     }, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile updated')));
@@ -146,10 +123,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
+            SizedBox(height:100),
             GestureDetector(
               onTap: _pickAndUploadPhoto,
               child: CircleAvatar(
-                radius: 40,
+                radius: 100,
                 backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
                 child: photoUrl == null ? Icon(Icons.person, size: 40) : null,
               ),
@@ -162,45 +140,27 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 hintText: 'Your Name',
                 border: InputBorder.none,
               ),
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
             ),
-            Text(user?.email ?? '', style: TextStyle(color: Colors.grey[700])),
+            Text(user?.email ?? '', style: TextStyle(fontSize: 18, color: Colors.grey[700])),
 
-            Divider(height: 32),
-
-            _buildGoalField('Weight Goal (lbs)', weightController),
-            _buildGoalField('Calorie Goal (kcal)', calorieController),
-            _buildGoalField('Workouts per Week', workoutController),
-            _buildGoalField('Protein Goal (g)', proteinController),
-
-            SizedBox(height: 24),
+            SizedBox(height: 110),
             ElevatedButton.icon(
               icon: Icon(Icons.save),
               label: Text('Save Profile'),
               onPressed: _saveProfile,
+              style:ElevatedButton.styleFrom(minimumSize: Size(double.infinity,60)),
             ),
             SizedBox(height: 16),
             OutlinedButton(
               onPressed: _changePassword,
               child: Text('Change Password'),
+              style:OutlinedButton.styleFrom(minimumSize: Size(double.infinity,60))
             ),
           ],
         ),
       ),
     );
   }
-
-  Widget _buildGoalField(String label, TextEditingController controller) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
-      child: TextField(
-        controller: controller,
-        keyboardType: TextInputType.number,
-        decoration: InputDecoration(
-          labelText: label,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-        ),
-      ),
-    );
-  }
 }
+
