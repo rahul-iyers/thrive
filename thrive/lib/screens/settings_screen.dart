@@ -18,6 +18,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController proteinGoalController = TextEditingController();
   String gender = 'Other';
   String weightUnit = 'Imperial';
+  final TextEditingController sleepGoalController = TextEditingController();
 
   final user = FirebaseAuth.instance.currentUser;
   final _firestore = FirebaseFirestore.instance;
@@ -40,6 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       proteinGoalController.text = cached.proteinGoal?.toString() ?? '';
       gender = cached.gender ?? 'Other';
       weightUnit = cached.weightUnit ?? 'Imperial';
+      sleepGoalController.text = cached.sleepGoal?.toString() ?? '';
       setState(() {});
     }
 
@@ -54,6 +56,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       proteinGoalController.text = data['proteinGoal']?.toString() ?? proteinGoalController.text;
       gender = data['gender'] ?? gender;
       weightUnit = data['weightUnit'] ?? weightUnit;
+      sleepGoalController.text = data['sleepGoal']?.toString() ?? sleepGoalController.text;
       setState(() {});
     }
   }
@@ -71,6 +74,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       calorieGoal: int.tryParse(calorieGoalController.text),
       workoutGoal: int.tryParse(workoutGoalController.text),
       proteinGoal: int.tryParse(proteinGoalController.text),
+      sleepGoal: double.tryParse(sleepGoalController.text)
     );
 
     await box.put('cached', updated);
@@ -84,6 +88,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'calorieGoal': updated.calorieGoal,
       'workoutGoal': updated.workoutGoal,
       'proteinGoal': updated.proteinGoal,
+      'sleepGoal': updated.sleepGoal
     }, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Settings saved')));
@@ -92,7 +97,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Settings')),
+      appBar: AppBar(title: Text('User Preferences')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: SingleChildScrollView(
@@ -107,6 +112,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               _buildField('Calorie Goal (kcal)', calorieGoalController),
               _buildField('Workouts per Week', workoutGoalController),
               _buildField('Protein Goal (g)', proteinGoalController),
+              _buildField('Sleep Goal (hrs)', sleepGoalController),
               SizedBox(height: 24),
               ElevatedButton.icon(
                 icon: Icon(Icons.save),

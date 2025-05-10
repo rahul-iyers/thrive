@@ -11,6 +11,7 @@ import 'screens/daily_notes_screen.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:intl/intl.dart';
 import '../services/firestore_service.dart';
+import 'models/user_profile.dart';
 
 class DayDetailScreen extends StatefulWidget {
   final DateTime date;
@@ -34,11 +35,24 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   int sleepQuality = 3;
   String sleepNotes = '';
 
+  double? sleepGoal;
+  int? calorieGoal;
+
   @override
   void initState() {
     super.initState();
     habitBox = Hive.box<Habit>('habits');
     loadHabit();
+    loadUserProfile();
+  }
+
+  void loadUserProfile() {
+    final box = Hive.box<UserProfile>('userProfile');
+    final profile = box.get('cached');
+    setState(() {
+      sleepGoal = profile?.sleepGoal;
+      calorieGoal = profile?.calorieGoal;
+    });
   }
 
   void saveHabit() {
@@ -113,6 +127,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   }
 
   Widget _buildDailySummaryCard() {
+    final totalCalories = (habit?.foods.fold(0.0, (sum, food) => sum + food.calories) ?? 0).toStringAsFixed(0);
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 4,
@@ -123,21 +138,25 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
           children: [
             Text('Today\'s Summary', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 12),
-            _buildSummaryRow('🛌 Sleep', sleepHours > 0
-                ? '${sleepHours.toStringAsFixed(1)}h • Quality: ${_sleepQualityText(sleepQuality)}'
-                : 'Not logged'),
+            _buildSummaryRow(
+              '🛌 Sleep',
+              sleepHours > 0
+                  ? '${sleepHours.toStringAsFixed(1)}h${sleepGoal != null ? ' / ${sleepGoal!.toStringAsFixed(1)}h' : ''} • Quality: ${_sleepQualityText(sleepQuality)}'
+                  : 'Not logged',
+            ),
             _buildSummaryRow('🙂 Mood', (habit?.moodEntries.isNotEmpty ?? false)
                 ? '${habit!.moodEntries.length} log(s)'
                 : 'Not logged'),
             _buildSummaryRow('🏋️ Workouts', (habit?.workouts.isNotEmpty ?? false)
                 ? '${habit!.workouts.length} workout(s)'
                 : 'Not logged'),
-            _buildSummaryRow('🥗 Nutrition', (habit?.foods.isNotEmpty ?? false)
-                ? '${habit!.foods.fold(0.0, (sum, food) => sum + food.calories).toStringAsFixed(0)} cal'
-                : 'Not logged'),
-            _buildSummaryRow('📝 Notes', dailyNotes.isNotEmpty
-                ? 'Added'
-                : 'Not logged'),
+            _buildSummaryRow(
+              '🥗 Nutrition',
+              (habit?.foods.isNotEmpty ?? false)
+                  ? '$totalCalories cal${calorieGoal != null ? ' / ${calorieGoal} cal' : ''}'
+                  : 'Not logged',
+            ),
+            _buildSummaryRow('📝 Notes', dailyNotes.isNotEmpty ? 'Added' : 'Not logged'),
           ],
         ),
       ),
@@ -151,11 +170,14 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(title, style: TextStyle(fontSize: 16)),
-          Text(detail, style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
-            color: Colors.black87,
-          )),
+          Text(
+            detail,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: Colors.black87,
+            ),
+          ),
         ],
       ),
     );
@@ -209,16 +231,18 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               color: Colors.pinkAccent,
               onPressed: () async {
                 final updatedHabit = await _slideToPage<Habit>(
-                  MoodEntryScreen(habit: habit ?? Habit(
-                    sleepHours: sleepHours,
-                    moodEntries: moodEntries,
-                    dietNotes: dietNotes,
-                    exercises: exercises,
-                    foods: [],
-                    workouts: [],
-                    workoutNotes: workoutNotes,
-                    dailyNotes: dailyNotes,
-                  )),
+                  MoodEntryScreen(
+                    habit: habit ?? Habit(
+                      sleepHours: sleepHours,
+                      moodEntries: moodEntries,
+                      dietNotes: dietNotes,
+                      exercises: exercises,
+                      foods: [],
+                      workouts: [],
+                      workoutNotes: workoutNotes,
+                      dailyNotes: dailyNotes,
+                    ),
+                  ),
                 );
                 if (updatedHabit != null) {
                   setState(() {
@@ -236,15 +260,17 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               color: Colors.blueAccent,
               onPressed: () async {
                 final updatedHabit = await _slideToPage<Habit>(
-                  WorkoutsScreen(habit: habit ?? Habit(
-                    sleepHours: sleepHours,
-                    moodEntries: moodEntries,
-                    dietNotes: dietNotes,
-                    exercises: exercises,
-                    foods: [],
-                    workoutNotes: workoutNotes,
-                    dailyNotes: dailyNotes,
-                  )),
+                  WorkoutsScreen(
+                    habit: habit ?? Habit(
+                      sleepHours: sleepHours,
+                      moodEntries: moodEntries,
+                      dietNotes: dietNotes,
+                      exercises: exercises,
+                      foods: [],
+                      workoutNotes: workoutNotes,
+                      dailyNotes: dailyNotes,
+                    ),
+                  ),
                 );
                 if (updatedHabit != null) {
                   setState(() {
@@ -262,15 +288,17 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
               color: Colors.green,
               onPressed: () async {
                 final updatedHabit = await _slideToPage<Habit>(
-                  NutritionScreen(habit: habit ?? Habit(
-                    sleepHours: sleepHours,
-                    moodEntries: moodEntries,
-                    dietNotes: dietNotes,
-                    exercises: exercises,
-                    foods: [],
-                    workoutNotes: workoutNotes,
-                    dailyNotes: dailyNotes,
-                  )),
+                  NutritionScreen(
+                    habit: habit ?? Habit(
+                      sleepHours: sleepHours,
+                      moodEntries: moodEntries,
+                      dietNotes: dietNotes,
+                      exercises: exercises,
+                      foods: [],
+                      workoutNotes: workoutNotes,
+                      dailyNotes: dailyNotes,
+                    ),
+                  ),
                 );
                 if (updatedHabit != null) {
                   setState(() {
