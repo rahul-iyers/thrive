@@ -12,6 +12,7 @@ import 'models/exercise.dart';
 import 'models/food.dart';
 import 'models/workout.dart';
 import 'models/mood_entry.dart';
+import 'models/user_profile.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -26,11 +27,13 @@ Future<void> main() async {
   Hive.registerAdapter(WorkoutAdapter());
   Hive.registerAdapter(FoodAdapter());
   Hive.registerAdapter(MoodEntryAdapter());
+  Hive.registerAdapter(UserProfileAdapter());
 
   // Safely open all boxes
   await openSafeBox<Habit>('habits');
   await openSafeBox<Exercise>('exercise_templates');
   await openSafeBox<Food>('food_templates');
+  await Hive.openBox<UserProfile>('userProfile');
 
   runApp(Thrive());
 }
