@@ -6,6 +6,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:hive/hive.dart';
+import '../models/user_profile.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -31,6 +34,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _loadProfile() async {
+    final box = Hive.box<UserProfile>('userProfile');
+    final cached = box.get('cached');
+    if (cached != null) {
+      nameController.text = cached.displayName;
+      photoUrl = cached.photoUrl;
+      weightController.text = cached.weightGoal?.toString() ?? '';
+      calorieController.text = cached.calorieGoal?.toString() ?? '';
+      workoutController.text = cached.workoutGoal?.toString() ?? '';
+      proteinController.text = cached.proteinGoal?.toString() ?? '';
+      setState(() {});
+    }
+
     final doc = await _firestore.collection('users').doc(user!.uid).get();
     final data = doc.data();
     if (data != null) {
@@ -53,13 +68,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
     await user!.reload();
 
+    final profile = UserProfile(
+      displayName: nameController.text.trim(),
+      photoUrl: photoUrl,
+      weightGoal: int.tryParse(weightController.text),
+      calorieGoal: int.tryParse(calorieController.text),
+      workoutGoal: int.tryParse(workoutController.text),
+      proteinGoal: int.tryParse(proteinController.text),
+    );
+
+    final box = Hive.box<UserProfile>('userProfile');
+    box.put('cached', profile);
+
     await _firestore.collection('users').doc(user!.uid).set({
-      'displayName': nameController.text.trim(),
-      'weightGoal': int.tryParse(weightController.text),
-      'calorieGoal': int.tryParse(calorieController.text),
-      'workoutGoal': int.tryParse(workoutController.text),
-      'proteinGoal': int.tryParse(proteinController.text),
-      'photoUrl': photoUrl,
+      'displayName': profile.displayName,
+      'weightGoal': profile.weightGoal,
+      'calorieGoal': profile.calorieGoal,
+      'workoutGoal': profile.workoutGoal,
+      'proteinGoal': profile.proteinGoal,
+      'photoUrl': profile.photoUrl,
     }, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Profile updated')));
@@ -71,7 +98,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _pickAndUploadPhoto() async {
-    // Ask for permission on Android 13+
     if (Platform.isAndroid && await Permission.mediaLibrary.isDenied) {
       final status = await Permission.mediaLibrary.request();
       if (!status.isGranted) {
@@ -104,7 +130,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Your Profile')),
+      appBar: AppBar(
+        title: Text('Your Profile'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.settings),
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => SettingsScreen()),
+            ),
+          )
+        ],
+      ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
