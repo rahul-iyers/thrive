@@ -83,7 +83,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           _buildMonthHeader(),
           _buildWeekDaysRow(),
           SizedBox(
-            height: 400,
+            height: 350,
             child: AnimatedSwitcher(
               duration: Duration(milliseconds: 300),
               child: GridView.builder(
@@ -153,8 +153,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.orange,
+                  foregroundColor: Colors.yellow,
+                  backgroundColor: Color(0xff232222),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -179,8 +179,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.blue,
+                  foregroundColor: Colors.yellow,
+                  backgroundColor: Color(0xff232222),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -205,8 +205,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.yellow,
+                  backgroundColor: Color(0xff232222),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -231,8 +231,8 @@ class _CalendarScreenState extends State<CalendarScreen> {
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
                   textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.white,
-                  backgroundColor: Colors.purple,
+                  foregroundColor: Colors.yellow,
+                  backgroundColor: Color(0xff232222),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -245,7 +245,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                   );
                 },
-                child: Text('🧠 AI Insights'),
+                child: Text('AI Insights'),
               ),
             ),
           ),
