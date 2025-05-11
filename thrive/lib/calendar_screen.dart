@@ -82,7 +82,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           _buildMonthHeader(),
           _buildWeekDaysRow(),
           SizedBox(
-            height: 500,
+            height: 400,
             child: AnimatedSwitcher(
               duration: Duration(milliseconds: 300),
               child: GridView.builder(
