@@ -7,6 +7,7 @@ import 'screens/exercise_templates_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/food_templates_screen.dart';
 import 'screens/ai_insights.dart';
+import 'screens/this_week_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'screens/login_screen.dart';
 import 'services/global_context_service.dart';
@@ -141,6 +142,32 @@ class _CalendarScreenState extends State<CalendarScreen> {
                     ),
                   );
                 },
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
+            child: SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  foregroundColor: Colors.white,
+                  backgroundColor: Colors.orange,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ThisWeekScreen(),
+                    ),
+                  );
+                },
+                child: Text('This Week'),
               ),
             ),
           ),
