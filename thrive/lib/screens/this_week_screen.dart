@@ -1,0 +1,162 @@
+import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:intl/intl.dart';
+import 'package:fl_chart/fl_chart.dart';
+
+class ThisWeekScreen extends StatefulWidget {
+  @override
+  _ThisWeekScreenState createState() => _ThisWeekScreenState();
+}
+
+class _ThisWeekScreenState extends State<ThisWeekScreen> {
+  DateTime startOfWeek = _getStartOfWeek();
+  Map<String, Map<String, dynamic>> dailyData = {};
+
+  static DateTime _getStartOfWeek() {
+    final now = DateTime.now();
+    final daysSinceSunday = now.weekday % 7;
+    return DateTime(now.year, now.month, now.day - daysSinceSunday);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    fetchWeekData();
+  }
+
+  Future<void> fetchWeekData() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final endOfWeek = startOfWeek.add(Duration(days: 7));
+    final habitsQuery = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(user.uid)
+        .collection('habits')
+        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
+        .where('timestamp', isLessThan: Timestamp.fromDate(endOfWeek))
+        .get();
+
+    Map<String, Map<String, dynamic>> dataByDay = {};
+    for (var doc in habitsQuery.docs) {
+      final data = doc.data();
+      final timestamp = (data['timestamp'] as Timestamp).toDate();
+      final dayKey = DateFormat('yyyy-MM-dd').format(timestamp); // e.g., 2025-05-12
+
+      dataByDay[dayKey] = data;
+    }
+
+    setState(() {
+      dailyData = dataByDay;
+    });
+  }
+
+  List<String> get weekLabels => ['Sun', 'M', 'T', 'W', 'Th', 'F', 'S'];
+
+  double getStat(DateTime day, String key, {bool count = false}) {
+    final dayKey = DateFormat('yyyy-MM-dd').format(day);
+    final entry = dailyData[dayKey];
+    if (entry == null) return 0;
+
+    if (count) {
+      final value = entry[key];
+      if (value is List) return value.length.toDouble();
+      return value != null ? 1 : 0;
+    }
+
+    final value = entry[key];
+    return (value is num) ? value.toDouble() : 0;
+  }
+
+  List<FlSpot> _getChartData(String key, {bool count = false}) {
+    return List.generate(7, (i) {
+      final day = startOfWeek.add(Duration(days: i));
+      return FlSpot(i.toDouble(), getStat(day, key, count: count));
+    });
+  }
+
+  Widget _buildChart(String title, List<FlSpot> data, String unit, double maxY) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+          SizedBox(
+            height: 250,
+            child: LineChart(
+              LineChartData(
+                minY: 0,
+                maxY: maxY,
+                titlesData: FlTitlesData(
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 32,
+                      interval: (maxY / 5),
+                    ),
+                  ),
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      interval: 1,
+                      getTitlesWidget: (value, _) {
+                        final index = value.toInt();
+                        if (index < 0 || index > 6) return Container();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4.0),
+                          child: Text(weekLabels[index], style: TextStyle(fontSize: 12)),
+                        );
+                      },
+                    ),
+                  ),
+                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(show: true),
+                borderData: FlBorderData(show: true),
+                lineBarsData: [
+                  LineChartBarData(
+                    spots: data,
+                    isCurved: false,
+                    barWidth: 3,
+                    dotData: FlDotData(show: true),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SizedBox(height: 4),
+          Text("Unit: $unit", style: TextStyle(color: Colors.grey)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final weekRange = "${DateFormat('MMM d').format(startOfWeek)} – ${DateFormat('MMM d').format(startOfWeek.add(Duration(days: 6)))}";
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("📈 This Week: $weekRange"),
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+      ),
+      body: dailyData.isEmpty
+          ? Center(child: Text("No data for this week yet."))
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            _buildChart("😴 Sleep Hours", _getChartData("sleepHours"), "hrs", 10),
+            _buildChart("🙂 Mood", _getChartData("moodRating"), "1–10", 10),
+            _buildChart("💪 Workouts", _getChartData("workouts", count: true), "count", 5),
+            _buildChart("🍎 Foods Logged", _getChartData("foods", count: true), "count", 5),
+          ],
+        ),
+      ),
+    );
+  }
+}
