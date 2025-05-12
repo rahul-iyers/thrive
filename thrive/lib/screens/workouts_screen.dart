@@ -312,7 +312,6 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> with SingleTickerProvid
               runSpacing: 8,
               children: [
                 _buildTotalTile('Workout Minutes', totalMinutes.toStringAsFixed(1), Colors.blueAccent),
-                // In future if you want to add more like "Total Workouts" etc, you can add here
               ],
             ),
           ],
@@ -426,13 +425,13 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> with SingleTickerProvid
                         );
                       },
                       child: Card(
-                        color: Colors.yellow[100],
+                        // color: Colors.yellow[100],
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
                           child: Column(
                             children: [
-                              Icon(Icons.swipe_left, color: Colors.orange),
+                              Icon(Icons.swipe_left),
                               SizedBox(height: 8),
                               Text(
                                 'Swipe left to delete a workout',
@@ -458,7 +457,7 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> with SingleTickerProvid
                         );
                       },
                       child: Card(
-                        color: Colors.blue[100],
+                        // color: Colors.blue[100],
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: Padding(
                           padding: const EdgeInsets.all(12),
@@ -522,7 +521,6 @@ class _WorkoutsScreenState extends State<WorkoutsScreen> with SingleTickerProvid
               confirmDismiss: (_) => _confirmDeleteDialog(workout.name),
               onDismissed: (_) => deleteWorkout(index),
               child: Card(
-                color: Colors.blue[50],
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 elevation: 2,
                 margin: EdgeInsets.symmetric(vertical: 6),

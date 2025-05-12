@@ -229,7 +229,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
     final selectedExercise = await showModalBottomSheet<Exercise>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -282,7 +281,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
                         itemBuilder: (context, index) {
                           final exercise = filteredTemplates[index];
                           return Card(
-                            color: Colors.blue[50],
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             child: ListTile(
                               contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -511,7 +509,6 @@ class _ExercisesScreenState extends State<ExercisesScreen> {
           workout.save();
         },
       child: Card(
-        color: Colors.yellow[50],
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         elevation: 3,
         margin: EdgeInsets.symmetric(vertical: 6),

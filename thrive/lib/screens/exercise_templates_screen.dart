@@ -121,7 +121,7 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
                 margin: EdgeInsets.symmetric(vertical: 6, horizontal: 4),
                 padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Color(0xff232222),
                   borderRadius: BorderRadius.circular(12),
                   boxShadow: [
                     BoxShadow(

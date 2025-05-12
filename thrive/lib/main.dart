@@ -21,7 +21,6 @@ Future<void> main() async {
   );
   await Hive.initFlutter();
 
-  // Register all adapters
   Hive.registerAdapter(HabitAdapter());
   Hive.registerAdapter(ExerciseAdapter());
   Hive.registerAdapter(WorkoutAdapter());
@@ -29,7 +28,6 @@ Future<void> main() async {
   Hive.registerAdapter(MoodEntryAdapter());
   Hive.registerAdapter(UserProfileAdapter());
 
-  // Safely open all boxes
   await openSafeBox<Habit>('habits');
   await openSafeBox<Exercise>('exercise_templates');
   await openSafeBox<Food>('food_templates');
@@ -55,16 +53,55 @@ class Thrive extends StatelessWidget {
     return MaterialApp(
       title: 'Thrive',
       navigatorKey: GlobalContextService.navigatorKey,
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: AuthGate(), // <-- new widget to handle login vs calendar
       debugShowCheckedModeBanner: false,
+      theme: ThemeData(
+        brightness: Brightness.dark,
+        scaffoldBackgroundColor: const Color(0xff4e4d4a),
+        primaryColor: Colors.yellow,
+        colorScheme: const ColorScheme.dark(
+          primary: Colors.yellow,
+          secondary: Colors.yellow,
+          surface: Color(0xff4e4d4a),
+          onPrimary: Colors.black,
+          onSurface: Colors.white,
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Color(0xff4e4d4a),
+          foregroundColor: Colors.yellow,
+          elevation: 0,
+        ),
+        cardTheme: CardTheme(
+          color: Color(0xff232222),       // black card background
+          shadowColor: Colors.black87,
+          elevation: 3,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+        ),
+        textTheme: const TextTheme(
+          bodyLarge: TextStyle(color: Colors.white),
+          bodyMedium: TextStyle(color: Colors.white70),
+          titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.yellow,
+            foregroundColor: Colors.black,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            textStyle: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+        ),
+      ),
+
+      home: AuthGate(),
     );
   }
 }
 
-// New Widget: AuthGate
 class AuthGate extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -72,15 +109,12 @@ class AuthGate extends StatelessWidget {
       stream: FirebaseAuth.instance.authStateChanges(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          // While checking login state, show loading spinner
-          return Scaffold(
+          return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         } else if (snapshot.hasData) {
-          // Logged in
           return CalendarScreen();
         } else {
-          // Not logged in
           return LoginScreen();
         }
       },
