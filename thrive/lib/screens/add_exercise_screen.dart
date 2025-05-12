@@ -177,7 +177,6 @@ class _AddExerciseScreenState extends State<AddExerciseScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // 🆕 Show Pick From Template button only if allowed
               if (widget.showPickTemplateButton) ...[
                 ElevatedButton(
                   onPressed: pickFromTemplate,

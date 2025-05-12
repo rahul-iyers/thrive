@@ -347,7 +347,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      backgroundColor: Colors.white,
       builder: (context) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -402,7 +401,6 @@ class _NutritionScreenState extends State<NutritionScreen> {
     return await showModalBottomSheet<Food>(
       context: context,
       isScrollControlled: true, // allows the sheet to be tall
-      backgroundColor: Colors.white,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -454,12 +452,12 @@ class _NutritionScreenState extends State<NutritionScreen> {
                         separatorBuilder: (context, index) => SizedBox(height: 8),
                         itemBuilder: (context, index) {
                           final food = filteredTemplates[index];
-                          return Card(
-                            color: Colors.green[50],
+                          return Card.filled(
+                            color: Color(0xff232222),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                             child: ListTile(
                               leading: Icon(Icons.restaurant_menu, color: Colors.green),
-                              title: Text(food.name, style: TextStyle(fontWeight: FontWeight.bold)),
+                              title: Text(food.name, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
                               subtitle: Text(
                                 '${food.calories} cal • ${food.protein}g P • ${food.carbs}g C • ${food.fats}g F',
                                 style: TextStyle(fontSize: 12),

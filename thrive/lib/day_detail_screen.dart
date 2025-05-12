@@ -106,7 +106,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
   Widget _buildCategoryButton({
     required IconData icon,
     required String label,
-    required Color color,
     required VoidCallback onPressed,
   }) {
     return SizedBox(
@@ -115,8 +114,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
         icon: Icon(icon, size: 28),
         label: Text(label, style: TextStyle(fontSize: 18)),
         style: ElevatedButton.styleFrom(
-          backgroundColor: color.withOpacity(0.9),
-          foregroundColor: Colors.white,
+          // backgroundColor: color.withOpacity(0.9),
           padding: EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
@@ -175,7 +173,6 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w500,
-              color: Colors.black87,
             ),
           ),
         ],
@@ -205,7 +202,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             _buildCategoryButton(
               icon: Icons.bedtime,
               label: 'Sleep',
-              color: Colors.indigoAccent,
+              // color: Colors.indigoAccent,
               onPressed: () async {
                 final updatedSleepData = await _slideToPage<Map<String, dynamic>>(
                   SleepEntryScreen(
@@ -228,7 +225,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             _buildCategoryButton(
               icon: Icons.sentiment_satisfied_alt,
               label: 'Mood',
-              color: Colors.pinkAccent,
+              // color: Colors.pinkAccent,
               onPressed: () async {
                 final updatedHabit = await _slideToPage<Habit>(
                   MoodEntryScreen(
@@ -257,7 +254,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             _buildCategoryButton(
               icon: Icons.fitness_center,
               label: 'Workouts',
-              color: Colors.blueAccent,
+              // color: Colors.blueAccent,
               onPressed: () async {
                 final updatedHabit = await _slideToPage<Habit>(
                   WorkoutsScreen(
@@ -285,7 +282,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             _buildCategoryButton(
               icon: Icons.restaurant,
               label: 'Nutrition',
-              color: Colors.green,
+              // color: Colors.green,
               onPressed: () async {
                 final updatedHabit = await _slideToPage<Habit>(
                   NutritionScreen(
@@ -313,7 +310,7 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             _buildCategoryButton(
               icon: Icons.note_alt,
               label: 'Daily Notes',
-              color: Colors.orange,
+              // color: Colors.orange,
               onPressed: () async {
                 final updatedNotes = await _slideToPage<String>(
                   DailyNotesScreen(initialNotes: dailyNotes),
