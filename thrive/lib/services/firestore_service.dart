@@ -7,7 +7,7 @@ import '../models/food.dart';
 import '../models/mood_entry.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 
-import '../models/habit.dart'; // adjust path as needed
+import '../models/habit.dart';
 
 bool templatesLoaded = false;
 
@@ -36,7 +36,7 @@ Future<void> saveHabitToFirestore(DateTime date, Habit habit, BuildContext conte
     'exercises': habit.exercises.map((e) => e.toMap()).toList(),
     'foods': habit.foods.map((f) => f.toMap()).toList(),
     'workouts': habit.workouts.map((w) => w.toMap()).toList(),
-    'timestamp': FieldValue.serverTimestamp(), // optional: track last update time
+    'timestamp': FieldValue.serverTimestamp(),
   };
 
   try {
@@ -53,13 +53,13 @@ Future<void> saveHabitToFirestore(DateTime date, Habit habit, BuildContext conte
         .doc(formattedDate)
         .set(habitData);
 
-    Navigator.pop(context); // Close loading spinner
+    Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Habit saved to cloud successfully!')),
     );
   } catch (e) {
-    Navigator.pop(context); // Close loading spinner
+    Navigator.pop(context);
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Failed to save habit.')),
@@ -95,7 +95,6 @@ Future<Habit?> loadHabitFromFirestore(DateTime date, BuildContext context) async
 
       if (data == null) return null;
 
-      // Rebuild Habit from Firestore data
       final habit = Habit(
         sleepHours: (data['sleepHours'] ?? 0).toDouble(),
         moodEntries: (data['moodEntries'] as List<dynamic>?)?.map((entry) => MoodEntry(
@@ -142,7 +141,6 @@ Future<Habit?> loadHabitFromFirestore(DateTime date, BuildContext context) async
         sleepNotes: (data['sleepNotes'] ?? ''),
       );
 
-      // Save it locally in Hive too
       final habitBox = Hive.box<Habit>('habits');
       habitBox.put(formattedDate, habit);
 

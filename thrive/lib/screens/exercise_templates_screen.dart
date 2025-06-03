@@ -73,9 +73,10 @@ class _ExerciseTemplatesScreenState extends State<ExerciseTemplatesScreen> {
               Navigator.pop(context);
               await saveTemplatesToFirestore(context);
             },
-            child: Text(
-              'Delete',
-              style: TextStyle(color: Colors.red),
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
+              child: Text('Delete'),
             ),
           ),
         ],

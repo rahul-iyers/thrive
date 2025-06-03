@@ -111,10 +111,10 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
-        icon: Icon(icon, size: 28),
-        label: Text(label, style: TextStyle(fontSize: 18)),
+        icon: Icon(icon, size: 28, color: Colors.yellow),
+        label: Text(label, style: TextStyle(fontSize: 18, color: Colors.yellow)),
         style: ElevatedButton.styleFrom(
-          // backgroundColor: color.withOpacity(0.9),
+          backgroundColor: Color(0xff232222),
           padding: EdgeInsets.symmetric(vertical: 18),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           elevation: 4,
@@ -137,24 +137,24 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
             Text('Today\'s Summary', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             SizedBox(height: 12),
             _buildSummaryRow(
-              '🛌 Sleep',
+              'Sleep',
               sleepHours > 0
                   ? '${sleepHours.toStringAsFixed(1)}h${sleepGoal != null ? ' / ${sleepGoal!.toStringAsFixed(1)}h' : ''} • Quality: ${_sleepQualityText(sleepQuality)}'
                   : 'Not logged',
             ),
-            _buildSummaryRow('🙂 Mood', (habit?.moodEntries.isNotEmpty ?? false)
-                ? '${habit!.moodEntries.length} log(s)'
-                : 'Not logged'),
-            _buildSummaryRow('🏋️ Workouts', (habit?.workouts.isNotEmpty ?? false)
+            // _buildSummaryRow('🙂 Mood', (habit?.moodEntries.isNotEmpty ?? false)
+            //     ? '${habit!.moodEntries.length} log(s)'
+            //     : 'Not logged'),
+            _buildSummaryRow('Workouts', (habit?.workouts.isNotEmpty ?? false)
                 ? '${habit!.workouts.length} workout(s)'
                 : 'Not logged'),
             _buildSummaryRow(
-              '🥗 Nutrition',
+              'Nutrition',
               (habit?.foods.isNotEmpty ?? false)
                   ? '$totalCalories cal${calorieGoal != null ? ' / ${calorieGoal} cal' : ''}'
                   : 'Not logged',
             ),
-            _buildSummaryRow('📝 Notes', dailyNotes.isNotEmpty ? 'Added' : 'Not logged'),
+            _buildSummaryRow('Notes', dailyNotes.isNotEmpty ? 'Added' : 'Not logged'),
           ],
         ),
       ),
@@ -221,35 +221,35 @@ class _DayDetailScreenState extends State<DayDetailScreen> {
                 }
               },
             ),
-            SizedBox(height: 12),
-            _buildCategoryButton(
-              icon: Icons.sentiment_satisfied_alt,
-              label: 'Mood',
-              // color: Colors.pinkAccent,
-              onPressed: () async {
-                final updatedHabit = await _slideToPage<Habit>(
-                  MoodEntryScreen(
-                    habit: habit ?? Habit(
-                      sleepHours: sleepHours,
-                      moodEntries: moodEntries,
-                      dietNotes: dietNotes,
-                      exercises: exercises,
-                      foods: [],
-                      workouts: [],
-                      workoutNotes: workoutNotes,
-                      dailyNotes: dailyNotes,
-                    ),
-                  ),
-                );
-                if (updatedHabit != null) {
-                  setState(() {
-                    habit = updatedHabit;
-                    moodEntries = updatedHabit.moodEntries;
-                  });
-                  saveHabit();
-                }
-              },
-            ),
+            // SizedBox(height: 12),
+            // _buildCategoryButton(
+            //   icon: Icons.sentiment_satisfied_alt,
+            //   label: 'Mood',
+            //   // color: Colors.pinkAccent,
+            //   onPressed: () async {
+            //     final updatedHabit = await _slideToPage<Habit>(
+            //       MoodEntryScreen(
+            //         habit: habit ?? Habit(
+            //           sleepHours: sleepHours,
+            //           moodEntries: moodEntries,
+            //           dietNotes: dietNotes,
+            //           exercises: exercises,
+            //           foods: [],
+            //           workouts: [],
+            //           workoutNotes: workoutNotes,
+            //           dailyNotes: dailyNotes,
+            //         ),
+            //       ),
+            //     );
+            //     if (updatedHabit != null) {
+            //       setState(() {
+            //         habit = updatedHabit;
+            //         moodEntries = updatedHabit.moodEntries;
+            //       });
+            //       saveHabit();
+            //     }
+            //   },
+            // ),
             SizedBox(height: 12),
             _buildCategoryButton(
               icon: Icons.fitness_center,
