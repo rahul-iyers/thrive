@@ -87,11 +87,11 @@ class _FoodTemplatesScreenState extends State<FoodTemplatesScreen>
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel'),
+            child: Text('Cancel',style: TextStyle(color: Colors.yellow)),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.yellow),
             child: Text('Delete'),
           ),
         ],

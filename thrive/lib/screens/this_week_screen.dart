@@ -9,9 +9,13 @@ class ThisWeekScreen extends StatefulWidget {
   _ThisWeekScreenState createState() => _ThisWeekScreenState();
 }
 
-class _ThisWeekScreenState extends State<ThisWeekScreen> {
+class _ThisWeekScreenState extends State<ThisWeekScreen>
+    with TickerProviderStateMixin {
   DateTime startOfWeek = _getStartOfWeek();
   Map<String, Map<String, dynamic>> dailyData = {};
+
+  late AnimationController _controller;
+  late Animation<double> _fadeAnimation;
 
   static DateTime _getStartOfWeek() {
     final now = DateTime.now();
@@ -22,7 +26,24 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
   @override
   void initState() {
     super.initState();
+
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 800),
+      vsync: this,
+    );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+    );
+
     fetchWeekData();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
   }
 
   Future<void> fetchWeekData() async {
@@ -42,7 +63,7 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
     for (var doc in habitsQuery.docs) {
       final data = doc.data();
       final timestamp = (data['timestamp'] as Timestamp).toDate();
-      final dayKey = DateFormat('yyyy-MM-dd').format(timestamp); // e.g., 2025-05-12
+      final dayKey = DateFormat('yyyy-MM-dd').format(timestamp);
 
       dataByDay[dayKey] = data;
     }
@@ -50,6 +71,8 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
     setState(() {
       dailyData = dataByDay;
     });
+
+    _controller.forward(); // trigger animation
   }
 
   List<String> get weekLabels => ['Sun', 'M', 'T', 'W', 'Th', 'F', 'S'];
@@ -77,59 +100,70 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
   }
 
   Widget _buildChart(String title, List<FlSpot> data, String unit, double maxY) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-          SizedBox(
-            height: 250,
-            child: LineChart(
-              LineChartData(
-                minY: 0,
-                maxY: maxY,
-                titlesData: FlTitlesData(
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 32,
-                      interval: (maxY / 5),
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: Offset(0, 0.2),
+        end: Offset.zero,
+      ).animate(_fadeAnimation),
+      child: FadeTransition(
+        opacity: _fadeAnimation,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white)),
+              SizedBox(height: 16),
+              SizedBox(
+                height: 250,
+                child: LineChart(
+                  LineChartData(
+                    minY: 0,
+                    maxY: maxY,
+                    titlesData: FlTitlesData(
+                      leftTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          reservedSize: 32,
+                          interval: (maxY / 5),
+                        ),
+                      ),
+                      bottomTitles: AxisTitles(
+                        sideTitles: SideTitles(
+                          showTitles: true,
+                          interval: 1,
+                          getTitlesWidget: (value, _) {
+                            final index = value.toInt();
+                            if (index < 0 || index > 6) return Container();
+                            return Padding(
+                              padding: const EdgeInsets.only(top: 4.0),
+                              child: Text(weekLabels[index], style: TextStyle(fontSize: 12)),
+                            );
+                          },
+                        ),
+                      ),
+                      topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                      rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                     ),
+                    gridData: FlGridData(show: false),
+                    borderData: FlBorderData(show: true),
+                    lineBarsData: [
+                      LineChartBarData(
+                        spots: data,
+                        isCurved: false,
+                        barWidth: 3,
+                        dotData: FlDotData(show: true),
+                        color: Colors.yellow,
+                      ),
+                    ],
                   ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      interval: 1,
-                      getTitlesWidget: (value, _) {
-                        final index = value.toInt();
-                        if (index < 0 || index > 6) return Container();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 4.0),
-                          child: Text(weekLabels[index], style: TextStyle(fontSize: 12)),
-                        );
-                      },
-                    ),
-                  ),
-                  topTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: AxisTitles(sideTitles: SideTitles(showTitles: false)),
                 ),
-                gridData: FlGridData(show: true),
-                borderData: FlBorderData(show: true),
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: data,
-                    isCurved: false,
-                    barWidth: 3,
-                    dotData: FlDotData(show: true),
-                  ),
-                ],
               ),
-            ),
+              SizedBox(height: 4),
+              Text("Unit: $unit", style: TextStyle(color: Colors.grey)),
+            ],
           ),
-          SizedBox(height: 4),
-          Text("Unit: $unit", style: TextStyle(color: Colors.grey)),
-        ],
+        ),
       ),
     );
   }
@@ -140,9 +174,9 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("📈 This Week: $weekRange"),
-        backgroundColor: Colors.indigo,
-        foregroundColor: Colors.white,
+        title: Text("This Week: $weekRange"),
+        backgroundColor: Color(0xff4e4d4a),
+        foregroundColor: Colors.yellow,
       ),
       body: dailyData.isEmpty
           ? Center(child: Text("No data for this week yet."))
@@ -150,10 +184,10 @@ class _ThisWeekScreenState extends State<ThisWeekScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildChart("😴 Sleep Hours", _getChartData("sleepHours"), "hrs", 10),
-            _buildChart("🙂 Mood", _getChartData("moodRating"), "1–10", 10),
-            _buildChart("💪 Workouts", _getChartData("workouts", count: true), "count", 5),
-            _buildChart("🍎 Foods Logged", _getChartData("foods", count: true), "count", 5),
+            _buildChart("Sleep Hours", _getChartData("sleepHours"), "hrs", 10),
+            // _buildChart("🙂 Mood", _getChartData("moodRating"), "1–10", 10),
+            _buildChart("Workouts", _getChartData("workouts", count: true), "count", 5),
+            _buildChart("Foods Logged", _getChartData("foods", count: true), "count", 5),
           ],
         ),
       ),

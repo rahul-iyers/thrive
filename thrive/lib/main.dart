@@ -6,6 +6,7 @@ import 'services/global_context_service.dart';
 import 'calendar_screen.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 import 'models/habit.dart';
 import 'models/exercise.dart';
@@ -55,6 +56,11 @@ class Thrive extends StatelessWidget {
       navigatorKey: GlobalContextService.navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
+        textTheme: GoogleFonts.robotoTextTheme().copyWith(
+          bodyLarge: GoogleFonts.roboto(color: Colors.white),
+          bodyMedium: GoogleFonts.roboto(color: Colors.white70),
+          titleLarge: GoogleFonts.roboto(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        ),
         brightness: Brightness.dark,
         scaffoldBackgroundColor: const Color(0xff4e4d4a),
         primaryColor: Colors.yellow,
@@ -79,11 +85,11 @@ class Thrive extends StatelessWidget {
           ),
           margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
         ),
-        textTheme: const TextTheme(
-          bodyLarge: TextStyle(color: Colors.white),
-          bodyMedium: TextStyle(color: Colors.white70),
-          titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
-        ),
+        // textTheme: const TextTheme(
+        //   bodyLarge: TextStyle(color: Colors.white),
+        //   bodyMedium: TextStyle(color: Colors.white70),
+        //   titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.white),
+        // ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             backgroundColor: Colors.yellow,
