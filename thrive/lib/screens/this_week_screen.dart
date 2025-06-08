@@ -102,7 +102,9 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
     });
   }
 
-  Widget _buildChart(String title, List<FlSpot> data, String unit, double maxY) {
+  Widget _buildChart(String title, List<FlSpot> data, String unit, double maxY,  {
+    String Function(int dayIndex, double y)? getTooltipText,
+  }) {
     return SlideTransition(
       position: Tween<Offset>(
         begin: Offset(0, 0.2),
@@ -123,6 +125,27 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
                   LineChartData(
                     minY: 0,
                     maxY: maxY,
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        tooltipBgColor: Colors.black87,
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((spot) {
+                            final int dayIndex = spot.x.toInt();
+                            final tooltipText = getTooltipText != null
+                                ? getTooltipText(dayIndex, spot.y)
+                                : '${spot.y.toStringAsFixed(1)} $unit';
+                            return LineTooltipItem(
+                              tooltipText,
+                              const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
                     titlesData: FlTitlesData(
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
@@ -197,9 +220,35 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildChart("Sleep Hours", _getChartData("sleepHours"), "hrs", 12),
+            _buildChart(
+              "Sleep Hours",
+              _getChartData("sleepHours"),
+              "hrs",
+              12,
+              getTooltipText: (dayIndex, y) {
+                final day = startOfWeek.add(Duration(days: dayIndex));
+                final dayKey = DateFormat('yyyy-MM-dd').format(day);
+                final quality = dailyData[dayKey]?['sleepQuality'];
+                final emoji = {
+                  5: '🌟 Excellent',
+                  4: '😊 Good',
+                  3: '😐 Average',
+                  2: '😴 Poor',
+                  1: '😵 Bad',
+                }[quality] ?? 'No data';
+
+                return '🛌 Sleep: ${y.toStringAsFixed(1)} hrs\n🌟 Quality: $emoji';
+              },
+            ),
+
             // _buildChart("🙂 Mood", _getChartData("moodRating"), "1–10", 10),
-            _buildChart("Workouts", _getChartData("workouts", count: true), "count", _getMaxY(workoutData)),
+            _buildChart(
+              "Workouts",
+              _getChartData("workouts", count: true),
+              "count",
+              _getMaxY(workoutData),
+            ),
+
             // _buildChart("Foods Logged", _getChartData("foods", count: true), "count", _getMaxY(_getChartData("foods"))),
           ],
         ),
