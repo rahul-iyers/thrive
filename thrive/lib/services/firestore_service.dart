@@ -37,6 +37,7 @@ Future<void> saveHabitToFirestore(DateTime date, Habit habit, BuildContext conte
     'foods': habit.foods.map((f) => f.toMap()).toList(),
     'workouts': habit.workouts.map((w) => w.toMap()).toList(),
     'timestamp': FieldValue.serverTimestamp(),
+    'loggedFor': formattedDate,
   };
 
   try {

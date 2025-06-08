@@ -45,7 +45,7 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
     _controller.dispose();
     super.dispose();
   }
-
+  List<FlSpot> workoutData = [];
   Future<void> fetchWeekData() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -55,21 +55,24 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
         .collection("users")
         .doc(user.uid)
         .collection('habits')
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfWeek))
-        .where('timestamp', isLessThan: Timestamp.fromDate(endOfWeek))
+        .where('loggedFor', isGreaterThanOrEqualTo: DateFormat('yyyy-MM-dd').format(startOfWeek))
+        .where('loggedFor', isLessThan: DateFormat('yyyy-MM-dd').format(endOfWeek))
         .get();
 
     Map<String, Map<String, dynamic>> dataByDay = {};
     for (var doc in habitsQuery.docs) {
       final data = doc.data();
-      final timestamp = (data['timestamp'] as Timestamp).toDate();
-      final dayKey = DateFormat('yyyy-MM-dd').format(timestamp);
+      final dayKey = data['loggedFor'];
+      if (dayKey != null && dayKey is String) {
+        dataByDay[dayKey] = data;
+      }
 
       dataByDay[dayKey] = data;
     }
 
     setState(() {
       dailyData = dataByDay;
+      workoutData = _getChartData("workouts", count:true);
     });
 
     _controller.forward(); // trigger animation
@@ -99,7 +102,9 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
     });
   }
 
-  Widget _buildChart(String title, List<FlSpot> data, String unit, double maxY) {
+  Widget _buildChart(String title, List<FlSpot> data, String unit, double maxY,  {
+    String Function(int dayIndex, double y)? getTooltipText,
+  }) {
     return SlideTransition(
       position: Tween<Offset>(
         begin: Offset(0, 0.2),
@@ -120,12 +125,33 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
                   LineChartData(
                     minY: 0,
                     maxY: maxY,
+                    lineTouchData: LineTouchData(
+                      touchTooltipData: LineTouchTooltipData(
+                        tooltipBgColor: Colors.black87,
+                        getTooltipItems: (touchedSpots) {
+                          return touchedSpots.map((spot) {
+                            final int dayIndex = spot.x.toInt();
+                            final tooltipText = getTooltipText != null
+                                ? getTooltipText(dayIndex, spot.y)
+                                : '${spot.y.toStringAsFixed(1)} $unit';
+                            return LineTooltipItem(
+                              tooltipText,
+                              const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
+                    ),
                     titlesData: FlTitlesData(
                       leftTitles: AxisTitles(
                         sideTitles: SideTitles(
                           showTitles: true,
                           reservedSize: 32,
-                          interval: (maxY / 5),
+                          interval: (maxY / 5).ceilToDouble(),
                         ),
                       ),
                       bottomTitles: AxisTitles(
@@ -168,6 +194,16 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
     );
   }
 
+  double _getMaxY(List<FlSpot> data) {
+    final yValues = data.map((e) => e.y).toList();
+    double maxY = yValues.reduce((a, b) => a > b ? a : b);
+    if (maxY == 0) {
+      maxY = 2;
+    }
+    // maxY = yValues.isEmpty ? 2 : yValues.reduce((a, b) => a > b ? a : b);
+    return maxY.toDouble();
+  }
+
   @override
   Widget build(BuildContext context) {
     final weekRange = "${DateFormat('MMM d').format(startOfWeek)} – ${DateFormat('MMM d').format(startOfWeek.add(Duration(days: 6)))}";
@@ -184,10 +220,36 @@ class _ThisWeekScreenState extends State<ThisWeekScreen>
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
-            _buildChart("Sleep Hours", _getChartData("sleepHours"), "hrs", 10),
+            _buildChart(
+              "Sleep Hours",
+              _getChartData("sleepHours"),
+              "hrs",
+              12,
+              getTooltipText: (dayIndex, y) {
+                final day = startOfWeek.add(Duration(days: dayIndex));
+                final dayKey = DateFormat('yyyy-MM-dd').format(day);
+                final quality = dailyData[dayKey]?['sleepQuality'];
+                final emoji = {
+                  5: '🌟 Excellent',
+                  4: '😊 Good',
+                  3: '😐 Average',
+                  2: '😴 Poor',
+                  1: '😵 Bad',
+                }[quality] ?? 'No data';
+
+                return '🛌 Sleep: ${y.toStringAsFixed(1)} hrs\n🌟 Quality: $emoji';
+              },
+            ),
+
             // _buildChart("🙂 Mood", _getChartData("moodRating"), "1–10", 10),
-            _buildChart("Workouts", _getChartData("workouts", count: true), "count", 5),
-            _buildChart("Foods Logged", _getChartData("foods", count: true), "count", 5),
+            _buildChart(
+              "Workouts",
+              _getChartData("workouts", count: true),
+              "count",
+              _getMaxY(workoutData),
+            ),
+
+            // _buildChart("Foods Logged", _getChartData("foods", count: true), "count", _getMaxY(_getChartData("foods"))),
           ],
         ),
       ),
