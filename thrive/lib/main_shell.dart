@@ -16,14 +16,12 @@ class _MainShellState extends State<MainShell> {
     CalendarScreen(),
     ThisWeekScreen(),
     FriendsScreen(),
-    NotificationsScreen(),
   ];
 
   final List<BottomNavigationBarItem> _navItems = [
-    BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+    BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Home'),
     BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'This Week'),
     BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Friends'),
-    BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Alerts'),
   ];
 
   @override

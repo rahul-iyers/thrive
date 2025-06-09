@@ -9,6 +9,7 @@ import 'screens/food_templates_screen.dart';
 import 'screens/ai_insights.dart';
 import 'screens/this_week_screen.dart';
 import 'screens/notifications_screen.dart';
+import 'screens/search_users_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/login_screen.dart';
@@ -66,22 +67,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
     return Scaffold(
       backgroundColor: Color(0xff4e4d4a),
       appBar: AppBar(
-        leading: IconButton(
-          icon: Icon(Icons.person, color: Colors.yellow),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => ProfileScreen()),
-            );
-          },
+        automaticallyImplyLeading: false,
+        title: Row(
+          children: [
+            IconButton(
+              icon: Icon(Icons.person, color: Colors.yellow),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                );
+              },
+            ),
+            IconButton(
+              icon: Icon(Icons.search, color: Colors.yellow),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SearchUsersScreen()),
+                );
+              },
+            ),
+            Spacer(),
+            Text(
+              'Thrive',
+              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: Colors.yellow),
+            ),
+            Spacer(),
+          ],
         ),
-        title: Text(
-          'Thrive',
-          style: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
         backgroundColor: Color(0xff4e4d4a),
-        foregroundColor: Colors.yellow,
         elevation: 0,
         actions: [
           Stack(
@@ -127,6 +142,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ],
       ),
+
       body: SafeArea(
         child: SingleChildScrollView(
           child: Column(
