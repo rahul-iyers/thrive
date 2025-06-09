@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'calendar_screen.dart';
 import 'screens/this_week_screen.dart';
+import 'screens/community_screen.dart';
 import 'screens/notifications_screen.dart';
 import 'screens/friends_screen.dart';
 
@@ -15,15 +16,13 @@ class _MainShellState extends State<MainShell> {
   final List<Widget> _screens = [
     CalendarScreen(),
     ThisWeekScreen(),
-    FriendsScreen(),
-    NotificationsScreen(),
+    CommunityScreen(),
   ];
 
   final List<BottomNavigationBarItem> _navItems = [
-    BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Calendar'),
+    BottomNavigationBarItem(icon: Icon(Icons.calendar_today), label: 'Home'),
     BottomNavigationBarItem(icon: Icon(Icons.bar_chart), label: 'This Week'),
-    BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Friends'),
-    BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Alerts'),
+    BottomNavigationBarItem(icon: Icon(Icons.people), label: 'Community'),
   ];
 
   @override
