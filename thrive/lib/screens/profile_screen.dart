@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -10,7 +9,6 @@ import 'package:hive/hive.dart';
 import '../models/user_profile.dart';
 import 'settings_screen.dart';
 
-// ... imports unchanged ...
 class ProfileScreen extends StatefulWidget {
   @override
   _ProfileScreenState createState() => _ProfileScreenState();
@@ -22,11 +20,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   final TextEditingController nameController = TextEditingController();
   String? photoUrl;
+  int friendCount = 0;
+  int totalWorkouts = 0;
 
   @override
   void initState() {
     super.initState();
     _loadProfile();
+    _loadStats();
   }
 
   Future<void> _loadProfile() async {
@@ -45,6 +46,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       photoUrl = data['photoUrl'] ?? user?.photoURL;
       setState(() {});
     }
+  }
+
+  Future<void> _loadStats() async {
+    final friendsSnap = await _firestore
+        .collection('users')
+        .doc(user!.uid)
+        .collection('friends')
+        .get();
+    final workoutsSnap = await _firestore
+        .collection('users')
+        .doc(user!.uid)
+        .collection('workouts')
+        .get();
+
+    setState(() {
+      friendCount = friendsSnap.size;
+      totalWorkouts = workoutsSnap.size;
+    });
   }
 
   Future<void> _saveProfile() async {
@@ -123,16 +142,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            SizedBox(height:100),
+            SizedBox(height: 40),
             GestureDetector(
               onTap: _pickAndUploadPhoto,
               child: CircleAvatar(
-                radius: 100,
+                radius: 70,
                 backgroundImage: photoUrl != null ? NetworkImage(photoUrl!) : null,
                 child: photoUrl == null ? Icon(Icons.person, size: 40) : null,
               ),
             ),
-            SizedBox(height: 8),
+            SizedBox(height: 12),
             TextField(
               controller: nameController,
               textAlign: TextAlign.center,
@@ -140,22 +159,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 hintText: 'Your Name',
                 border: InputBorder.none,
               ),
-              style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
             ),
-            Text(user?.email ?? '', style: TextStyle(fontSize: 18, color: Colors.grey[700])),
+            SizedBox(height: 4),
+            Text(user?.email ?? '', style: TextStyle(fontSize: 16, color: Colors.grey[600])),
 
-            SizedBox(height: 110),
+            SizedBox(height: 24),
+            Divider(),
+            ListTile(
+              leading: Icon(Icons.fitness_center, color: Colors.yellow),
+              title: Text('Workouts Completed'),
+              trailing: Text('$totalWorkouts'),
+            ),
+            ListTile(
+              leading: Icon(Icons.group, color: Colors.yellow),
+              title: Text('Friends'),
+              trailing: Text('$friendCount'),
+            ),
+            Divider(),
+            SizedBox(height: 24),
             ElevatedButton.icon(
               icon: Icon(Icons.save),
               label: Text('Save Profile'),
               onPressed: _saveProfile,
-              style:ElevatedButton.styleFrom(minimumSize: Size(double.infinity,60)),
+              style: ElevatedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
             ),
             SizedBox(height: 16),
             OutlinedButton(
               onPressed: _changePassword,
               child: Text('Change Password'),
-              style:OutlinedButton.styleFrom(minimumSize: Size(double.infinity,60))
+              style: OutlinedButton.styleFrom(minimumSize: Size(double.infinity, 50)),
             ),
           ],
         ),
@@ -163,4 +196,3 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
-
