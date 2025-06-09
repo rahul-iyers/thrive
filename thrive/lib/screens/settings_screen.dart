@@ -10,18 +10,23 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  final TextEditingController usernameController = TextEditingController();
   final TextEditingController ageController = TextEditingController();
   final TextEditingController heightController = TextEditingController();
   final TextEditingController weightGoalController = TextEditingController();
   final TextEditingController calorieGoalController = TextEditingController();
   final TextEditingController workoutGoalController = TextEditingController();
   final TextEditingController proteinGoalController = TextEditingController();
-  String gender = 'Other';
-  String weightUnit = 'Imperial';
   final TextEditingController sleepGoalController = TextEditingController();
 
+  String gender = 'Other';
+  String weightUnit = 'Imperial';
   final user = FirebaseAuth.instance.currentUser;
   final _firestore = FirebaseFirestore.instance;
+
+  String? oldUsername;
+  String? usernameStatusMessage;
+  bool? isUsernameAvailable;
 
   @override
   void initState() {
@@ -48,6 +53,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final doc = await _firestore.collection('users').doc(user!.uid).get();
     final data = doc.data();
     if (data != null) {
+      usernameController.text = data['username'] ?? '';
+      oldUsername = data['username'];
       ageController.text = data['age']?.toString() ?? ageController.text;
       heightController.text = data['heightInches']?.toString() ?? heightController.text;
       weightGoalController.text = data['weightGoal']?.toString() ?? weightGoalController.text;
@@ -61,9 +68,61 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
+  Future<void> checkUsernameAvailability(String username) async {
+    final formatValid = RegExp(r'^[a-zA-Z0-9._]{3,30}$').hasMatch(username);
+    if (!formatValid) {
+      setState(() {
+        isUsernameAvailable = null;
+        usernameStatusMessage = "3–30 chars. Letters, numbers, '.', '_' only.";
+      });
+      return;
+    }
+
+    final doc = await _firestore.collection('usernames').doc(username).get();
+    final isTaken = doc.exists && username != oldUsername;
+
+    setState(() {
+      isUsernameAvailable = !isTaken;
+      usernameStatusMessage = isTaken ? "Username is taken" : "Username is available";
+    });
+  }
+
   Future<void> _saveSettings() async {
     final box = Hive.box<UserProfile>('userProfile');
     final current = box.get('cached') ?? UserProfile(displayName: '', photoUrl: null);
+
+    final newUsername = usernameController.text.trim();
+
+    if (newUsername.isNotEmpty && newUsername != oldUsername) {
+      if (!RegExp(r'^[a-zA-Z0-9._]{3,30}$').hasMatch(newUsername)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Invalid username format.')),
+        );
+        return;
+      }
+
+      final taken = await _firestore.collection('usernames').doc(newUsername).get();
+      if (taken.exists) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Username already taken.')),
+        );
+        return;
+      }
+
+      if (oldUsername != null) {
+        await _firestore.collection('usernames').doc(oldUsername!).delete();
+      }
+
+      await _firestore.collection('usernames').doc(newUsername).set({
+        'uid': user!.uid,
+      });
+
+      await _firestore.collection('users').doc(user!.uid).update({
+        'username': newUsername,
+      });
+
+      oldUsername = newUsername;
+    }
 
     final updated = current.copyWith(
       age: int.tryParse(ageController.text),
@@ -74,7 +133,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       calorieGoal: int.tryParse(calorieGoalController.text),
       workoutGoal: int.tryParse(workoutGoalController.text),
       proteinGoal: int.tryParse(proteinGoalController.text),
-      sleepGoal: double.tryParse(sleepGoalController.text)
+      sleepGoal: double.tryParse(sleepGoalController.text),
     );
 
     await box.put('cached', updated);
@@ -88,7 +147,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       'calorieGoal': updated.calorieGoal,
       'workoutGoal': updated.workoutGoal,
       'proteinGoal': updated.proteinGoal,
-      'sleepGoal': updated.sleepGoal
+      'sleepGoal': updated.sleepGoal,
     }, SetOptions(merge: true));
 
     ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Settings saved')));
@@ -103,6 +162,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: SingleChildScrollView(
           child: Column(
             children: [
+              _buildUsernameField(),
               _buildField('Age', ageController),
               _buildField('Height (inches)', heightController),
               _buildDropdown('Gender', ['Male', 'Female', 'Other'], gender, (val) => setState(() => gender = val!)),
@@ -150,6 +210,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
         decoration: InputDecoration(
           labelText: label,
           border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildUsernameField() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 4, bottom:16),
+      child: TextField(
+        controller: usernameController,
+        onChanged: (value) => checkUsernameAvailability(value.trim()),
+        decoration: InputDecoration(
+          labelText: 'Username',
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+          suffixIcon: isUsernameAvailable == null
+              ? null
+              : Icon(
+            isUsernameAvailable! ? Icons.check_circle : Icons.error,
+            color: isUsernameAvailable! ? Colors.green : Colors.red,
+          ),
+          helperText: usernameStatusMessage,
+          helperStyle: TextStyle(
+            color: isUsernameAvailable == false ? Colors.red : Colors.grey,
+          ),
         ),
       ),
     );
