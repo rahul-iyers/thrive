@@ -6,6 +6,7 @@ import 'services/global_context_service.dart';
 import 'calendar_screen.dart';
 import 'firebase_options.dart';
 import 'screens/login_screen.dart';
+import 'main_shell.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import 'models/habit.dart';
@@ -119,7 +120,7 @@ class AuthGate extends StatelessWidget {
             body: Center(child: CircularProgressIndicator()),
           );
         } else if (snapshot.hasData) {
-          return CalendarScreen();
+          return MainShell();
         } else {
           return LoginScreen();
         }

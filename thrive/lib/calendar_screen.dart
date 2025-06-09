@@ -8,7 +8,9 @@ import 'screens/profile_screen.dart';
 import 'screens/food_templates_screen.dart';
 import 'screens/ai_insights.dart';
 import 'screens/this_week_screen.dart';
+import 'screens/notifications_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'screens/login_screen.dart';
 import 'services/global_context_service.dart';
 import 'services/firestore_service.dart';
@@ -23,11 +25,13 @@ class _CalendarScreenState extends State<CalendarScreen> {
   Box<Habit>? habitBox;
   DateTime? _tappedDay;
   bool _hasLoadedTemplates = false;
+  int pendingRequests = 0;
 
   @override
   void initState() {
     super.initState();
     habitBox = Hive.box<Habit>('habits');
+    _loadPendingRequests();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!_hasLoadedTemplates) {
         final user = FirebaseAuth.instance.currentUser;
@@ -36,6 +40,22 @@ class _CalendarScreenState extends State<CalendarScreen> {
           await loadTemplatesFromFirestore(GlobalContextService.globalContext);
         }
       }
+    });
+  }
+
+  Future<void> _loadPendingRequests() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final snapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid)
+        .collection('friend_requests')
+        .where('status', isEqualTo: 'pending')
+        .get();
+
+    setState(() {
+      pendingRequests = snapshot.size;
     });
   }
 
@@ -64,6 +84,36 @@ class _CalendarScreenState extends State<CalendarScreen> {
         foregroundColor: Colors.yellow,
         elevation: 0,
         actions: [
+          Stack(
+            children: [
+              IconButton(
+                icon: Icon(Icons.notifications, color: Colors.yellow),
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => NotificationsScreen()),
+                  );
+                  _loadPendingRequests();
+                },
+              ),
+              if (pendingRequests > 0)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    padding: EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Text(
+                      '$pendingRequests',
+                      style: TextStyle(color: Colors.white, fontSize: 12),
+                    ),
+                  ),
+                )
+            ],
+          ),
           IconButton(
             icon: Icon(Icons.logout),
             onPressed: () async {
@@ -77,180 +127,112 @@ class _CalendarScreenState extends State<CalendarScreen> {
           ),
         ],
       ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              _buildMonthHeader(),
+              _buildWeekDaysRow(),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * 0.36,
+                child: AnimatedSwitcher(
+                  duration: Duration(milliseconds: 300),
+                  child: GridView.builder(
+                    physics: NeverScrollableScrollPhysics(),
+                    key: ValueKey<String>(_focusedMonth.toString()),
+                    padding: const EdgeInsets.all(12),
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 7,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                    ),
+                    itemCount: days.length,
+                    itemBuilder: (context, index) {
+                      final day = days[index];
+                      final isToday = _isSameDay(day, DateTime.now());
 
-      body: Column(
-        children: [
-          _buildMonthHeader(),
-          _buildWeekDaysRow(),
-          SizedBox(
-            height: 350,
-            child: AnimatedSwitcher(
-              duration: Duration(milliseconds: 300),
-              child: GridView.builder(
-                key: ValueKey<String>(_focusedMonth.toString()),
-                padding: const EdgeInsets.all(12),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 7,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                ),
-                itemCount: days.length,
-                itemBuilder: (context, index) {
-                  final day = days[index];
-                  final isToday = _isSameDay(day, DateTime.now());
+                      return GestureDetector(
+                        onTap: () async {
+                          setState(() {
+                            _tappedDay = day;
+                          });
 
-                  return GestureDetector(
-                    onTap: () async {
-                      setState(() {
-                        _tappedDay = day;
-                      });
+                          await Future.delayed(Duration(milliseconds: 150));
+                          await Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => DayDetailScreen(date: day),
+                            ),
+                          );
 
-                      await Future.delayed(Duration(milliseconds: 150));
-                      await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DayDetailScreen(date: day),
-                        ),
-                      );
-
-                      setState(() {
-                        _tappedDay = null;
-                      });
-                    },
-                    child: AnimatedScale(
-                      scale: _tappedDay == day ? 0.95 : 1.0,
-                      duration: Duration(milliseconds: 150),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isToday ? Colors.yellow : Color(0xff232222),
-                          shape: BoxShape.circle,
-                        ),
-                        alignment: Alignment.center,
-                        child: Text(
-                          '${day.day}',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w800,
-                            color: isToday
-                                ? Color(0xff232222)
-                                : (day.month == _focusedMonth.month
-                                ? Colors.white
-                                : Colors.grey[600]),
+                          setState(() {
+                            _tappedDay = null;
+                          });
+                        },
+                        child: AnimatedScale(
+                          scale: _tappedDay == day ? 0.95 : 1.0,
+                          duration: Duration(milliseconds: 150),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: isToday ? Colors.yellow : Color(0xff232222),
+                              shape: BoxShape.circle,
+                            ),
+                            alignment: Alignment.center,
+                            child: Text(
+                              '${day.day}',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w800,
+                                color: isToday
+                                    ? Color(0xff232222)
+                                    : (day.month == _focusedMonth.month
+                                    ? Colors.white
+                                    : Colors.grey[600]),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.yellow,
-                  backgroundColor: Color(0xff232222),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                      );
+                    },
                   ),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ThisWeekScreen(),
-                    ),
-                  );
-                },
-                child: Text('This Week'),
               ),
-            ),
+              _buildNavButton('This Week', () => ThisWeekScreen()),
+              _buildNavButton('Your Exercises', () => ExerciseTemplatesScreen()),
+              _buildNavButton('Your Foods', () => FoodTemplatesScreen()),
+              _buildNavButton('AI Insights', () => AIInsightsScreen()),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.yellow,
-                  backgroundColor: Color(0xff232222),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ExerciseTemplatesScreen(),
-                    ),
-                  );
-                },
-                child: Text('Your Exercises'),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.yellow,
-                  backgroundColor: Color(0xff232222),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => FoodTemplatesScreen(),
-                    ),
-                  );
-                },
-                child: Text('Your Foods'),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
-            child: SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  foregroundColor: Colors.yellow,
-                  backgroundColor: Color(0xff232222),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => AIInsightsScreen(),
-                    ),
-                  );
-                },
-                child: Text('AI Insights'),
-              ),
-            ),
-          ),
+        ),
+      ),
+    );
+  }
 
-        ],
+  Widget _buildNavButton(String label, Widget Function() screenBuilder) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 24.0),
+      child: SizedBox(
+        width: double.infinity,
+        height: 50,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            foregroundColor: Colors.yellow,
+            backgroundColor: Color(0xff232222),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => screenBuilder(),
+              ),
+            );
+          },
+          child: Text(label),
+        ),
       ),
     );
   }
@@ -262,7 +244,7 @@ class _CalendarScreenState extends State<CalendarScreen> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           IconButton(
-            icon: Icon(Icons.chevron_left, size: 32, color:Colors.yellow),
+            icon: Icon(Icons.chevron_left, size: 32, color: Colors.yellow),
             onPressed: () {
               setState(() {
                 _focusedMonth = DateTime(
@@ -278,11 +260,11 @@ class _CalendarScreenState extends State<CalendarScreen> {
               fontSize: 32,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.2,
-              color: Colors.yellow
+              color: Colors.yellow,
             ),
           ),
           IconButton(
-            icon: Icon(Icons.chevron_right, size: 32, color:Colors.yellow),
+            icon: Icon(Icons.chevron_right, size: 32, color: Colors.yellow),
             onPressed: () {
               setState(() {
                 _focusedMonth = DateTime(
